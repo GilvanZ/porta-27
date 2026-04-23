@@ -138,7 +138,19 @@ function reducer(state: RunState, action: Action): RunState {
 
       let phase = state.phase;
       let deathCause = state.deathCause;
-      if (newHp <= 0) {
+      let revivedHp = newHp;
+      let revivedSanity = newSanity;
+      let finalItems = items;
+      let finalLog = log;
+
+      const wouldDie = newHp <= 0 || newSanity <= 0;
+      const totemIdx = items.findIndex((i) => i.id === "totem_renascimento");
+      if (wouldDie && totemIdx >= 0) {
+        finalItems = items.filter((_, i) => i !== totemIdx);
+        revivedHp = newMaxHp;
+        revivedSanity = Math.max(newSanity, Math.floor(newMaxSanity / 2));
+        finalLog = [...log, "O totem se quebra. Voce volta a si."].slice(-30);
+      } else if (newHp <= 0) {
         phase = "gameover";
         deathCause = "Sua vida foi reduzida a zero.";
       } else if (newSanity <= 0) {
@@ -150,14 +162,14 @@ function reducer(state: RunState, action: Action): RunState {
 
       return {
         ...state,
-        items,
-        hp: newHp,
-        sanity: newSanity,
+        items: finalItems,
+        hp: revivedHp,
+        sanity: revivedSanity,
         gold: newGold,
         maxHp: newMaxHp,
         maxSanity: newMaxSanity,
         doorNumber: newDoorNumber,
-        log,
+        log: finalLog,
         phase,
         deathCause,
         roomResolved: true,
@@ -372,6 +384,8 @@ export function Game() {
                 room={roomData}
                 kind={state.currentRoom?.door.trueKind ?? "empty"}
                 ctx={{ hp: state.hp, sanity: state.sanity, gold: state.gold, maxHp: state.maxHp, maxSanity: state.maxSanity }}
+                ownedItems={state.items}
+                eff={eff}
                 resolved={state.roomResolved}
                 onResolve={handleResolve}
                 onContinue={handleContinue}

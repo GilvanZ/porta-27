@@ -10,6 +10,20 @@ export interface RoomData {
   art: string; // ascii pixel scene
   accent: string; // tailwind text color
   events?: string[]; // log entries from entering
+  combat?: CombatData;
+}
+
+export interface CombatData {
+  enemyName: string;
+  enemyHp: number;
+  enemyMaxHp: number;
+  enemyAtk: number;       // base damage per hit (pre-mod)
+  enemySanityAtk: number; // sanity damage chance per hit
+  isBoss: boolean;
+  baseEscapeChance: number;
+  goldOnKill: number;
+  itemDropChance: number;
+  sanityOnKill: number; // negative = sanity drained from witnessing
 }
 
 export interface RoomOption {
@@ -174,47 +188,27 @@ export function buildRoom(door: Door, ctx: RoomCtx): RoomData {
     case "enemy": {
       const tier = Math.floor(ctx.doorNumber / 10) + 1;
       const enemyName = pick(rng, ["Cao Sem Pelo", "Sombra Lenta", "Coisa Magra", "Boca Quieta", "Vulto Cego"]);
-      const hpDmg = clampDmg(intBetween(rng, 1 + tier, 3 + tier), eff);
-      const sanityDmg = chance(rng, 0.4) ? 1 : 0;
+      const enemyMaxHp = 4 + tier * 2 + intBetween(rng, 0, 2);
+      const enemyAtk = 1 + Math.floor(tier * 0.7) + intBetween(rng, 0, 1);
+      const baseGold = intBetween(rng, 2, 4) + Math.floor(eff.lootMod * 2) + tier;
       return {
         title: enemyName,
         flavor: "Algo se mexe alem da fresta. Te viu primeiro.",
         accent: "text-blood",
         art: ART.enemy,
-        options: [
-          {
-            label: "Lutar",
-            resolve: () => {
-              const took = clampDmg(hpDmg, eff);
-              if (chance(rng, 0.65)) {
-                const g = intBetween(rng, 1, 3) + Math.floor(eff.lootMod * 2);
-                return {
-                  hpDelta: -took,
-                  sanityDelta: -sanityDmg,
-                  goldDelta: g,
-                  message: `Voce abate ${enemyName}. (-${took} vida, +${g} ouro)`,
-                  end: true,
-                };
-              }
-              return {
-                hpDelta: -took - 1,
-                sanityDelta: -sanityDmg - 1,
-                message: `Encontro brutal. Voce escapa ferido. (-${took + 1} vida)`,
-                end: true,
-              };
-            },
-          },
-          {
-            label: "Tentar fugir",
-            resolve: () => {
-              if (chance(rng, 0.55)) {
-                return { sanityDelta: -1, message: "Voce escapa por pouco. (-1 sanidade)", end: true };
-              }
-              const took = clampDmg(hpDmg + 1, eff);
-              return { hpDelta: -took, sanityDelta: -1, message: `Te alcancou. (-${took} vida)`, end: true };
-            },
-          },
-        ],
+        options: [],
+        combat: {
+          enemyName,
+          enemyHp: enemyMaxHp,
+          enemyMaxHp,
+          enemyAtk,
+          enemySanityAtk: chance(rng, 0.4) ? 1 : 0,
+          isBoss: false,
+          baseEscapeChance: 0.5,
+          goldOnKill: baseGold,
+          itemDropChance: 0.18,
+          sanityOnKill: chance(rng, 0.3) ? -1 : 0,
+        },
       };
     }
 
@@ -482,52 +476,28 @@ export function buildRoom(door: Door, ctx: RoomCtx): RoomData {
 
     case "boss": {
       const tier = Math.floor(ctx.doorNumber / 10) + 1;
-      const dmg = clampDmg(intBetween(rng, 4, 6) + tier, eff);
       const bossName = ctx.doorNumber >= 90 ? "O Carcereiro" : pick(rng, ["O Devorador", "Coisa de Muitos Bracos", "A Mae Faminta", "O Coro"]);
+      const enemyMaxHp = 14 + tier * 4 + intBetween(rng, 0, 3);
+      const enemyAtk = 2 + tier + intBetween(rng, 0, 1);
+      const baseGold = intBetween(rng, 10, 16) + Math.floor(eff.lootMod * 5) + tier * 2;
       return {
         title: bossName,
         flavor: "Voce sente que essa porta era melhor nao ter aberto.",
         accent: "text-blood",
         art: ART.boss,
-        options: [
-          {
-            label: "Enfrentar de frente",
-            resolve: () => {
-              if (chance(rng, 0.55)) {
-                const g = intBetween(rng, 8, 14) + Math.floor(eff.lootMod * 6);
-                const it = chance(rng, 0.6) ? pickRandomItem(rng, items.map((i) => i.id)) : null;
-                return {
-                  hpDelta: -dmg,
-                  sanityDelta: -2,
-                  goldDelta: g,
-                  itemGained: it,
-                  message: `${bossName} cai. (-${dmg} vida, +${g} ouro${it ? `, +${it.name}` : ""})`,
-                  end: true,
-                };
-              }
-              return {
-                hpDelta: -dmg - 3,
-                sanityDelta: -3,
-                message: `Quase morre. (-${dmg + 3} vida, -3 sanidade)`,
-                end: true,
-              };
-            },
-          },
-          {
-            label: "Fugir pelas frestas",
-            resolve: () => {
-              if (chance(rng, 0.4)) {
-                return { sanityDelta: -2, message: "Voce escorrega entre as paredes. (-2 sanidade)", end: true };
-              }
-              return {
-                hpDelta: -dmg - 2,
-                sanityDelta: -3,
-                message: `Te puxou pelos calcanhares. (-${dmg + 2} vida)`,
-                end: true,
-              };
-            },
-          },
-        ],
+        options: [],
+        combat: {
+          enemyName: bossName,
+          enemyHp: enemyMaxHp,
+          enemyMaxHp,
+          enemyAtk,
+          enemySanityAtk: 1,
+          isBoss: true,
+          baseEscapeChance: 0.25,
+          goldOnKill: baseGold,
+          itemDropChance: 0.7,
+          sanityOnKill: -2,
+        },
       };
     }
 

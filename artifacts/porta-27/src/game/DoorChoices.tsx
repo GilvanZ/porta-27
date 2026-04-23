@@ -14,12 +14,20 @@ export function DoorChoices({
 }) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [scanned, setScanned] = useState(false);
 
   useEffect(() => {
     setRevealed(false);
+    setScanned(false);
     const t = setTimeout(() => setRevealed(true), 250);
     return () => clearTimeout(t);
   }, [doors]);
+
+  const onScan = () => {
+    if (scanned) return;
+    sfx.hover();
+    setScanned(true);
+  };
 
   return (
     <div className="h-full flex flex-col items-center justify-center">
@@ -34,6 +42,7 @@ export function DoorChoices({
             door={d}
             index={i}
             revealed={revealed}
+            scanned={scanned}
             isHovered={hovered === d.id}
             onHover={(h) => {
               if (h) sfx.hover();
@@ -44,15 +53,29 @@ export function DoorChoices({
         ))}
       </div>
 
+      {eff.hasActiveScan && (
+        <button
+          onClick={onScan}
+          disabled={scanned}
+          className={`mt-4 text-[9px] px-4 py-2 border-2 ${
+            scanned
+              ? "border-rare/40 text-rare/50"
+              : "border-rare text-rare hover:bg-rare/20 active:bg-rare/30"
+          } transition-colors min-h-[36px]`}
+        >
+          {scanned ? "OLHO USADO ✦" : "✦ USAR OLHO DE VIDRO (revela tipos)"}
+        </button>
+      )}
+
       <div className="mt-6 text-[8px] text-ink-dim flex gap-4 flex-wrap justify-center max-w-[700px]">
         {eff.hintClarity > 0 && (
           <span className="text-mind-bright">[+{eff.hintClarity} clareza]</span>
         )}
-        {eff.visionBonus && <span className="text-rare">[visao revela 1 porta]</span>}
         {eff.mapBonus && <span className="text-mind">[mapa parcial]</span>}
         {eff.skipChance > 0 && (
           <span className="text-ember">[chance de atalho +{Math.round(eff.skipChance * 100)}%]</span>
         )}
+        {eff.hasRevive && <span className="text-rare">[totem ativo]</span>}
       </div>
     </div>
   );
@@ -62,6 +85,7 @@ function DoorCard({
   door,
   index,
   revealed,
+  scanned,
   isHovered,
   onHover,
   onClick,
@@ -69,6 +93,7 @@ function DoorCard({
   door: Door;
   index: number;
   revealed: boolean;
+  scanned: boolean;
   isHovered: boolean;
   onHover: (h: boolean) => void;
   onClick: () => void;
@@ -107,6 +132,15 @@ function DoorCard({
         </div>
       )}
 
+      {scanned && (
+        <div
+          className="mt-1 text-[8px] px-2 py-[2px] border border-rare/60 text-rare tracking-widest"
+          style={{ textShadow: "0 0 4px #b87fc955" }}
+        >
+          ✦ {kindLabel(door.trueKind)}
+        </div>
+      )}
+
       <div className="mt-3 flex flex-col gap-1 items-center min-h-[40px]">
         {door.hints.map((h, i) => (
           <div
@@ -128,6 +162,21 @@ function DoorCard({
       </div>
     </button>
   );
+}
+
+function kindLabel(k: string) {
+  switch (k) {
+    case "empty": return "VAZIA";
+    case "enemy": return "INIMIGO";
+    case "trap": return "ARMADILHA";
+    case "treasure": return "TESOURO";
+    case "event": return "EVENTO";
+    case "shop": return "MERCADOR";
+    case "rest": return "DESCANSO";
+    case "rare": return "RARO";
+    case "boss": return "CHEFE";
+    default: return k.toUpperCase();
+  }
 }
 
 function hintColor(h: string) {

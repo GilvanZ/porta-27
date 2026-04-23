@@ -52,6 +52,15 @@ export interface ItemEffect {
   maxHpBonus?: number;
   maxSanityBonus?: number;
   goldGainOnDoor?: number;
+  // Combat / equipment
+  weaponDmg?: number;       // +flat damage on player attack
+  weaponDmgRandom?: number; // +random 0..n bonus damage
+  escapeBonus?: number;     // +flat % to escape combat
+  critReduction?: number;   // caps incoming damage by this many points
+  killLootBonus?: number;   // bonus % gold/loot when killing an enemy
+  // Active / one-shot
+  revive?: boolean;         // consumed on lethal damage; restores you
+  activeScan?: boolean;     // unlocks "scan" button on doors screen
 }
 
 export interface Item {

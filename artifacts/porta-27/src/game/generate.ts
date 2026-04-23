@@ -16,6 +16,13 @@ export interface AggregatedEffects {
   goldGainOnDoor: number;
   maxHpBonus: number;
   maxSanityBonus: number;
+  weaponDmg: number;
+  weaponDmgRandom: number;
+  escapeBonus: number;
+  critReduction: number;
+  killLootBonus: number;
+  hasRevive: boolean;
+  hasActiveScan: boolean;
 }
 
 export function aggregateEffects(items: Item[]): AggregatedEffects {
@@ -34,6 +41,13 @@ export function aggregateEffects(items: Item[]): AggregatedEffects {
     goldGainOnDoor: 0,
     maxHpBonus: 0,
     maxSanityBonus: 0,
+    weaponDmg: 0,
+    weaponDmgRandom: 0,
+    escapeBonus: 0,
+    critReduction: 0,
+    killLootBonus: 0,
+    hasRevive: false,
+    hasActiveScan: false,
   };
   for (const it of items) {
     const e = it.effect;
@@ -51,6 +65,13 @@ export function aggregateEffects(items: Item[]): AggregatedEffects {
     a.goldGainOnDoor += e.goldGainOnDoor ?? 0;
     a.maxHpBonus += e.maxHpBonus ?? 0;
     a.maxSanityBonus += e.maxSanityBonus ?? 0;
+    a.weaponDmg += e.weaponDmg ?? 0;
+    a.weaponDmgRandom += e.weaponDmgRandom ?? 0;
+    a.escapeBonus += e.escapeBonus ?? 0;
+    a.critReduction += e.critReduction ?? 0;
+    a.killLootBonus += e.killLootBonus ?? 0;
+    a.hasRevive = a.hasRevive || !!e.revive;
+    a.hasActiveScan = a.hasActiveScan || !!e.activeScan;
   }
   return a;
 }
