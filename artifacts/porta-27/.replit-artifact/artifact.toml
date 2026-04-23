@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Porta 27"
+version = "1.0.0"
+id = "artifacts/porta-27"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23403
+
+[services.development]
+run = "pnpm --filter @workspace/porta-27 run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/porta-27", "run", "build" ]
+publicDir = "artifacts/porta-27/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23403"
+BASE_PATH = "/"

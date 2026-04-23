@@ -1,0 +1,159 @@
+import type { Item } from "./types";
+
+export const ALL_ITEMS: Item[] = [
+  {
+    id: "lente_rachada",
+    name: "Lente Rachada",
+    glyph: "◉",
+    rarity: "incomum",
+    desc: "Uma lente quebrada que mostra mais do que devia.",
+    upside: "Pistas das portas mais claras",
+    downside: "Atrai salas mais perigosas",
+    effect: { hintClarity: 1, difficultyMod: 0.15 },
+    tags: ["visao"],
+  },
+  {
+    id: "saco_furado",
+    name: "Saco Furado",
+    glyph: "▲",
+    rarity: "comum",
+    desc: "Mais espaco, mais loot, menos sanidade.",
+    upside: "+50% loot dos baus",
+    downside: "Drena sanidade a cada sala",
+    effect: { lootMod: 0.5, sanityDrainPerRoom: 1 },
+    tags: ["loot"],
+  },
+  {
+    id: "bota_velha",
+    name: "Bota Velha",
+    glyph: "ᗉ",
+    rarity: "comum",
+    desc: "Pula portas, mas pula recompensas.",
+    upside: "Chance de transformar portas em atalhos",
+    downside: "Sem loot em salas puladas",
+    effect: { skipChance: 0.2 },
+    tags: ["velocidade"],
+  },
+  {
+    id: "mapa_rasgado",
+    name: "Mapa Rasgado",
+    glyph: "▤",
+    rarity: "incomum",
+    desc: "Mostra um pedaco do corredor adiante.",
+    upside: "Pistas das portas seguintes",
+    downside: "Inimigos mais fortes",
+    effect: { mapBonus: true, enemyDmgMod: 0.25 },
+    tags: ["visao"],
+  },
+  {
+    id: "olho_vidro",
+    name: "Olho de Vidro",
+    glyph: "◎",
+    rarity: "raro",
+    desc: "Enxerga no escuro.",
+    upside: "Revela tipo verdadeiro de uma porta",
+    effect: { visionBonus: true },
+    tags: ["visao"],
+  },
+  {
+    id: "luva_couro",
+    name: "Luva de Couro",
+    glyph: "✋",
+    rarity: "comum",
+    desc: "Resiste a armadilhas comuns.",
+    upside: "40% de ignorar armadilhas",
+    effect: { trapResist: 0.4 },
+    tags: ["defesa"],
+  },
+  {
+    id: "amuleto_estranho",
+    name: "Amuleto Estranho",
+    glyph: "♁",
+    rarity: "raro",
+    desc: "Atrai eventos raros do corredor.",
+    upside: "+15% de chance de salas raras",
+    downside: "-1 sanidade por sala",
+    effect: { rareChanceBonus: 0.15, sanityDrainPerRoom: 1 },
+    tags: ["raro"],
+  },
+  {
+    id: "moeda_pesada",
+    name: "Moeda Pesada",
+    glyph: "◐",
+    rarity: "comum",
+    desc: "Cada porta entrega uma moeda extra.",
+    upside: "+1 ouro por porta",
+    effect: { goldGainOnDoor: 1 },
+    tags: ["economia"],
+  },
+  {
+    id: "coracao_lata",
+    name: "Coracao de Lata",
+    glyph: "♥",
+    rarity: "incomum",
+    desc: "Mais vida, menos sanidade.",
+    upside: "+5 vida maxima",
+    downside: "-3 sanidade maxima",
+    effect: { maxHpBonus: 5, maxSanityBonus: -3 },
+    tags: ["vida"],
+  },
+  {
+    id: "espelho_quebrado",
+    name: "Espelho Quebrado",
+    glyph: "◇",
+    rarity: "incomum",
+    desc: "Mais sanidade, menos vida.",
+    upside: "+5 sanidade maxima",
+    downside: "-3 vida maxima",
+    effect: { maxSanityBonus: 5, maxHpBonus: -3 },
+    tags: ["mente"],
+  },
+  {
+    id: "faca_enferrujada",
+    name: "Faca Enferrujada",
+    glyph: "✚",
+    rarity: "comum",
+    desc: "Reduz dano de inimigos.",
+    upside: "-30% dano sofrido de inimigos",
+    effect: { enemyDmgMod: -0.3 },
+    tags: ["defesa"],
+  },
+  {
+    id: "cruz_invertida",
+    name: "Cruz Invertida",
+    glyph: "✝",
+    rarity: "amaldicoado",
+    desc: "Pisca quando algo terrivel se aproxima.",
+    upside: "Pistas muito claras (+2 niveis)",
+    downside: "Drena 2 sanidade por sala",
+    effect: { hintClarity: 2, sanityDrainPerRoom: 2 },
+    tags: ["visao", "mente"],
+  },
+  {
+    id: "vela_negra",
+    name: "Vela Negra",
+    glyph: "✦",
+    rarity: "raro",
+    desc: "Queima silenciosamente.",
+    upside: "Reduz drenos de sanidade pela metade",
+    effect: { sanityDrainPerRoom: -1 },
+    tags: ["mente"],
+  },
+];
+
+export function pickRandomItem(rng: () => number, exclude: string[] = []): Item {
+  const pool = ALL_ITEMS.filter((i) => !exclude.includes(i.id));
+  if (pool.length === 0) return ALL_ITEMS[Math.floor(rng() * ALL_ITEMS.length)];
+  return pool[Math.floor(rng() * pool.length)];
+}
+
+export function pickShopItems(rng: () => number, owned: string[]): Item[] {
+  const out: Item[] = [];
+  const used = [...owned];
+  for (let i = 0; i < 3; i++) {
+    const it = pickRandomItem(rng, used);
+    used.push(it.id);
+    out.push(it);
+  }
+  return out;
+}
