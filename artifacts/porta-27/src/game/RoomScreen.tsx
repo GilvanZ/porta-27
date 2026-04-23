@@ -18,8 +18,8 @@ export function RoomScreen({
   const [shake, setShake] = useState(false);
 
   useEffect(() => {
-    setResultMsg(null);
-  }, [room]);
+    if (!resolved) setResultMsg(null);
+  }, [resolved]);
 
   const handleClick = (resolveFn: (c: any) => RoomResolution) => {
     const res = resolveFn({ ...ctx } as RoomCtx);
