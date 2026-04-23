@@ -34,35 +34,38 @@ export function RoomScreen({
   };
 
   return (
-    <div className={`h-full flex flex-col items-center justify-start py-2 ${shake ? "animate-[shake_0.3s]" : ""}`}>
-      <div className={`text-[14px] tracking-[0.3em] text-shadow-hard ${room.accent}`}>
+    <div className={`min-h-full flex flex-col items-center justify-start py-2 px-2 ${shake ? "animate-[shake_0.3s]" : ""}`}>
+      <div className={`text-[12px] sm:text-[14px] tracking-[0.25em] sm:tracking-[0.3em] text-shadow-hard text-center ${room.accent}`}>
         {room.title.toUpperCase()}
       </div>
-      <div className="text-[9px] text-ink-dim mt-1 italic max-w-[600px] text-center">
+      <div className="text-[9px] text-ink-dim mt-1 italic max-w-[600px] text-center px-2">
         {room.flavor}
       </div>
 
-      <pre className={`mt-4 text-[12px] leading-[1.05] ${room.accent} text-shadow-hard`} style={{ filter: "drop-shadow(0 0 6px currentColor)" }}>
+      <pre
+        className={`mt-3 sm:mt-4 text-[8px] sm:text-[12px] leading-[1.05] ${room.accent} text-shadow-hard overflow-x-auto max-w-full`}
+        style={{ filter: "drop-shadow(0 0 6px currentColor)" }}
+      >
 {room.art}
       </pre>
 
       {resolved && resultMsg ? (
-        <div className="mt-4 flex flex-col items-center gap-3">
-          <div className="text-[11px] text-ink text-center max-w-[500px]">{resultMsg}</div>
+        <div className="mt-4 flex flex-col items-center gap-3 w-full">
+          <div className="text-[11px] text-ink text-center max-w-[500px] px-2">{resultMsg}</div>
           <button
             onClick={onContinue}
-            className="text-[11px] px-6 py-2 border-2 border-ember text-ember-bright hover:bg-ember hover:text-bg transition-colors"
+            className="text-[11px] px-6 py-3 border-2 border-ember text-ember-bright hover:bg-ember hover:text-bg active:bg-ember active:text-bg transition-colors min-h-[44px]"
           >
             CONTINUAR ►
           </button>
         </div>
       ) : (
-        <div className="mt-4 flex flex-col gap-2 items-stretch w-full max-w-[400px]">
+        <div className="mt-4 flex flex-col gap-2 items-stretch w-full max-w-[420px]">
           {room.options.map((opt, i) => (
             <button
               key={i}
               onClick={() => handleClick(opt.resolve)}
-              className="text-[10px] px-3 py-2 border border-ink-dim hover:border-ember-bright text-ink hover:text-ember-bright transition-colors text-left"
+              className="text-[10px] px-3 py-3 border border-ink-dim hover:border-ember-bright active:border-ember-bright active:bg-ember/10 text-ink hover:text-ember-bright transition-colors text-left min-h-[44px]"
             >
               {">"} {opt.label}
             </button>

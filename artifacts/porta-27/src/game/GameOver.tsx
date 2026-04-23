@@ -10,7 +10,7 @@ export function GameOver({
   bestRun: number;
 }) {
   return (
-    <div className="relative z-10 flex flex-col items-center text-center max-w-[600px] px-4">
+    <div className="relative z-10 flex flex-col items-center text-center max-w-[600px] px-4 py-12">
       <div className="text-blood text-[8px] tracking-[0.4em] mb-2 flicker">VOCE NAO PASSOU.</div>
       <h1 className="text-blood text-[40px] sm:text-[64px] text-shadow-hard mb-2 glow-pulse" style={{ color: "#8b1a1a" }}>
         FIM

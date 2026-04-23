@@ -27,7 +27,7 @@ export function DoorChoices({
         TRES PORTAS NO CORREDOR
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-[900px]">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-[900px]">
         {doors.map((d, i) => (
           <DoorCard
             key={d.id}
@@ -86,7 +86,7 @@ function DoorCard({
       }}
       className={`group relative flex flex-col items-center bg-bg-soft border-2 ${
         isHovered ? "border-ember" : "border-ink-dim/50"
-      } px-4 py-6 transition-all duration-300 hover:bg-fog`}
+      } px-3 py-4 sm:px-4 sm:py-6 transition-all duration-300 hover:bg-fog active:bg-fog active:border-ember min-h-[140px]`}
     >
       {/* Door pixel art */}
       <div
@@ -161,7 +161,7 @@ function DoorArt({ number, highlight, shortcut }: { number: number; highlight: b
   const variant = number % 4;
   const handleSide = number % 2 === 0 ? "right" : "left";
   return (
-    <svg width="120" height="160" viewBox="0 0 60 80" style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 60 80" className="w-[80px] h-[110px] sm:w-[120px] sm:h-[160px]" style={{ imageRendering: "pixelated" }}>
       {/* Frame */}
       <rect x="2" y="2" width="56" height="76" fill="#0d1018" stroke={highlight ? "#f5b25c" : "#3a3528"} strokeWidth="1" />
       <rect x="6" y="6" width="48" height="68" fill={shortcut ? "#1a0f08" : "#1a1308"} stroke={highlight ? "#d97a2a" : "#2a2418"} strokeWidth="1" />
