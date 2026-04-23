@@ -94,4 +94,6 @@ export interface RunState {
   totalRuns: number;
   deathCause: string;
   seed: number;
+  healGained: number;
+  roomsCleared: number;
 }

@@ -57,8 +57,13 @@ function makeInitialRun(seed: number): RunState {
     totalRuns: 0,
     deathCause: "",
     seed,
+    healGained: 0,
+    roomsCleared: 0,
   };
 }
+
+const HEAL_INTERVAL = 2;
+const HEAL_CAP = 10;
 
 type Action =
   | { type: "start"; seed: number }
@@ -160,11 +165,35 @@ function reducer(state: RunState, action: Action): RunState {
     }
     case "endRoom": {
       if (state.phase !== "room") return state;
+      const roomsCleared = state.roomsCleared + 1;
+      let hp = state.hp;
+      let sanity = state.sanity;
+      let healGained = state.healGained;
+      const log = [...state.log];
+      if (
+        roomsCleared > 0 &&
+        roomsCleared % HEAL_INTERVAL === 0 &&
+        healGained < HEAL_CAP
+      ) {
+        const before = hp;
+        hp = Math.min(state.maxHp, hp + 1);
+        sanity = Math.min(state.maxSanity, sanity + 1);
+        const gained = hp - before;
+        if (gained > 0) {
+          healGained += gained;
+        }
+        log.push("Voce respira fundo. (+1 vida, +1 sanidade)");
+      }
       return {
         ...state,
         currentRoom: null,
         phase: "doors",
         roomResolved: false,
+        roomsCleared,
+        hp,
+        sanity,
+        healGained,
+        log: log.slice(-30),
       };
     }
     case "reset": {
@@ -341,6 +370,7 @@ export function Game() {
             {state.phase === "room" && roomData && (
               <RoomScreen
                 room={roomData}
+                kind={state.currentRoom?.door.trueKind ?? "empty"}
                 ctx={{ hp: state.hp, sanity: state.sanity, gold: state.gold, maxHp: state.maxHp, maxSanity: state.maxSanity }}
                 resolved={state.roomResolved}
                 onResolve={handleResolve}
