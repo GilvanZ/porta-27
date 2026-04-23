@@ -312,7 +312,7 @@ export function Game() {
   };
 
   return (
-    <div className="crt relative w-full h-full bg-bg overflow-hidden flex flex-col items-center justify-center select-none">
+    <div className="crt relative w-full min-h-screen md:h-full bg-bg md:overflow-hidden flex flex-col items-center justify-center select-none">
       {/* Background fog particles */}
       <FogLayer />
 
@@ -325,7 +325,7 @@ export function Game() {
       )}
 
       {state.phase !== "title" && state.phase !== "gameover" && state.phase !== "victory" && (
-        <div className="relative z-10 w-full max-w-[1100px] px-4 py-3 flex flex-col h-full">
+        <div className="relative z-10 w-full max-w-[1100px] px-2 sm:px-4 py-3 flex flex-col min-h-screen md:h-full">
           <HUD state={state} onMute={toggleMute} muted={muted} onInventory={() => setShowInventory(true)} />
 
           <Corridor doorNumber={state.doorNumber} mapPreview={mapPreview} />
