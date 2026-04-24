@@ -16,13 +16,10 @@ export interface AggregatedEffects {
   goldGainOnDoor: number;
   maxHpBonus: number;
   maxSanityBonus: number;
-  weaponDmg: number;
-  weaponDmgRandom: number;
-  escapeBonus: number;
-  critReduction: number;
-  killLootBonus: number;
-  hasRevive: boolean;
-  hasActiveScan: boolean;
+  damageReduction: number;
+  attackBonus: number;
+  hpRegenPerRoom: number;
+  falseHints: number;
 }
 
 export function aggregateEffects(items: Item[]): AggregatedEffects {
@@ -41,15 +38,14 @@ export function aggregateEffects(items: Item[]): AggregatedEffects {
     goldGainOnDoor: 0,
     maxHpBonus: 0,
     maxSanityBonus: 0,
-    weaponDmg: 0,
-    weaponDmgRandom: 0,
-    escapeBonus: 0,
-    critReduction: 0,
-    killLootBonus: 0,
-    hasRevive: false,
-    hasActiveScan: false,
+    damageReduction: 0,
+    attackBonus: 0,
+    hpRegenPerRoom: 0,
+    falseHints: 0,
   };
   for (const it of items) {
+    // Equipment effects only count when equipped
+    if (it.slot && !it.equipped) continue;
     const e = it.effect;
     a.hintClarity += e.hintClarity ?? 0;
     a.difficultyMod += e.difficultyMod ?? 0;
@@ -65,13 +61,10 @@ export function aggregateEffects(items: Item[]): AggregatedEffects {
     a.goldGainOnDoor += e.goldGainOnDoor ?? 0;
     a.maxHpBonus += e.maxHpBonus ?? 0;
     a.maxSanityBonus += e.maxSanityBonus ?? 0;
-    a.weaponDmg += e.weaponDmg ?? 0;
-    a.weaponDmgRandom += e.weaponDmgRandom ?? 0;
-    a.escapeBonus += e.escapeBonus ?? 0;
-    a.critReduction += e.critReduction ?? 0;
-    a.killLootBonus += e.killLootBonus ?? 0;
-    a.hasRevive = a.hasRevive || !!e.revive;
-    a.hasActiveScan = a.hasActiveScan || !!e.activeScan;
+    a.damageReduction = Math.min(0.85, a.damageReduction + (e.damageReduction ?? 0));
+    a.attackBonus += e.attackBonus ?? 0;
+    a.hpRegenPerRoom += e.hpRegenPerRoom ?? 0;
+    a.falseHints += e.falseHints ?? 0;
   }
   return a;
 }
@@ -99,15 +92,12 @@ const RED_HERRINGS: Hint[] = [
   "CHEIRO DE FERRO",
 ];
 
-function generateHints(rng: () => number, kind: RoomKind, clarity: number): Hint[] {
+function generateHints(rng: () => number, kind: RoomKind, clarity: number, falseHints: number): Hint[] {
   const truthful = HINT_BANK_BY_KIND[kind];
   const hints: Hint[] = [];
 
-  // Number of hints
-  const count = intBetween(rng, 1, 2);
-
-  // chance of being truthful per hint based on clarity
-  const truthChance = Math.min(0.95, 0.45 + clarity * 0.18);
+  const count = intBetween(rng, 1, 2) + (falseHints > 0 ? 1 : 0);
+  const truthChance = Math.min(0.95, 0.45 + clarity * 0.18 - falseHints * 0.12);
 
   for (let i = 0; i < count; i++) {
     if (chance(rng, truthChance)) {
@@ -116,23 +106,18 @@ function generateHints(rng: () => number, kind: RoomKind, clarity: number): Hint
       hints.push(pick(rng, RED_HERRINGS));
     }
   }
-  // dedupe
   return Array.from(new Set(hints));
 }
 
 function pickKind(rng: () => number, doorNumber: number, eff: AggregatedEffects): RoomKind {
-  // Boss every ~10 doors after door 25, plus final
   const tier = Math.floor(doorNumber / 10);
   const isBossDoor = doorNumber > 0 && doorNumber % 10 === 0 && doorNumber >= 20;
-
-  // Rare event 1% base, modified
   const rareRoll = 0.01 + eff.rareChanceBonus;
 
   if (chance(rng, rareRoll)) return "rare";
   if (isBossDoor && chance(rng, 0.55)) return "boss";
 
   const diff = eff.difficultyMod;
-  // Base weights, scaled by tier
   const w: Record<RoomKind, number> = {
     empty: Math.max(4, 14 - tier * 1.2),
     enemy: 14 + tier * 1.5 + diff * 8,
@@ -159,7 +144,7 @@ function pickKind(rng: () => number, doorNumber: number, eff: AggregatedEffects)
 export function generateDoors(
   rng: () => number,
   doorNumber: number,
-  items: Item[],
+  _items: Item[],
   eff: AggregatedEffects
 ): Door[] {
   const doors: Door[] = [];
@@ -168,20 +153,18 @@ export function generateDoors(
     let skipAmount = 1;
     let shortcutCost: number | undefined;
 
-    // Possible shortcut transformation
     if (eff.skipChance > 0 && chance(rng, eff.skipChance)) {
       kind = "shortcut";
       skipAmount = intBetween(rng, 3, 8);
       shortcutCost = intBetween(rng, 1, 3);
     } else if (chance(rng, 0.05) && doorNumber > 5) {
-      // organic shortcuts
       kind = "shortcut";
       skipAmount = intBetween(rng, 4, 12);
       shortcutCost = intBetween(rng, 2, 4);
     }
 
     const targetNumber = Math.min(100, doorNumber + skipAmount);
-    const hints = generateHints(rng, kind, eff.hintClarity);
+    const hints = generateHints(rng, kind, eff.hintClarity, eff.falseHints);
 
     doors.push({
       id: `d-${doorNumber}-${i}-${Math.floor(rng() * 1e6)}`,
@@ -192,7 +175,6 @@ export function generateDoors(
       shortcutCost,
     });
   }
-  // Vision bonus: reveal one door's true kind by appending a marker hint
   if (eff.visionBonus && doors.length > 0) {
     const idx = Math.floor(rng() * doors.length);
     const trueLabel = trueKindLabel(doors[idx].trueKind);
@@ -242,4 +224,31 @@ export function generateMapPreview(
     out.push(pickKind(rng, startDoor + i, eff));
   }
   return out;
+}
+
+export function trueKindReadable(k: RoomKind): string {
+  switch (k) {
+    case "empty":
+      return "Sala Vazia";
+    case "enemy":
+      return "Inimigo";
+    case "trap":
+      return "Armadilha";
+    case "chest":
+      return "Bau";
+    case "puzzle":
+      return "Enigma";
+    case "npc":
+      return "NPC";
+    case "shop":
+      return "Loja";
+    case "shrine":
+      return "Altar";
+    case "boss":
+      return "CHEFE";
+    case "rare":
+      return "Sala Rara";
+    case "shortcut":
+      return "Atalho";
+  }
 }

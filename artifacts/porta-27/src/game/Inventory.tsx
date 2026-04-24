@@ -1,88 +1,216 @@
+import { useState } from "react";
 import type { Item } from "./types";
 import type { AggregatedEffects } from "./generate";
+import { canDiscard, rarityColor } from "./items";
 
 export function Inventory({
   items,
-  onClose,
-  eff,
+  currentDoor,
+  visionActive,
+  canActivateVision,
+  inCombat,
+  onUseItem,
+  onEquip,
+  onDiscard,
+  onActivateVision,
 }: {
   items: Item[];
-  onClose: () => void;
-  eff: AggregatedEffects;
+  currentDoor: number;
+  visionActive: boolean;
+  canActivateVision: boolean;
+  inCombat: boolean;
+  onUseItem: (uid: string) => void;
+  onEquip: (uid: string) => void;
+  onDiscard: (uid: string) => void;
+  onActivateVision: () => void;
+  eff?: AggregatedEffects;
 }) {
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="bg-bg border-2 border-ember max-w-[600px] w-full p-6 max-h-[80vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-[12px] text-ember-bright text-shadow-ember tracking-[0.3em]">
-            INVENTARIO
-          </div>
-          <button onClick={onClose} className="text-[10px] text-ink-dim hover:text-ember">
-            [X]
-          </button>
+    <div className="fixed bottom-2 right-2 z-40 max-w-[260px] sm:max-w-[300px] pointer-events-none">
+      <div className="pointer-events-auto bg-bg/95 border border-ember/40 backdrop-blur-sm shadow-[0_0_18px_rgba(217,122,42,0.18)]">
+        <div className="px-2 py-1 border-b border-ink-dim/40 flex items-center justify-between text-[8px] tracking-[0.3em] text-ember-bright">
+          <span>INVENTARIO</span>
+          <span className="text-ink-dim">{items.length}</span>
         </div>
 
-        {items.length === 0 ? (
-          <div className="text-[10px] text-ink-dim italic">Vazio. So voce e o corredor.</div>
-        ) : (
-          <div className="grid grid-cols-1 gap-2">
-            {items.map((it, idx) => (
-              <div
-                key={idx}
-                className="border border-ink-dim/50 p-3 flex gap-3 items-start hover:border-ember/60 transition-colors"
-              >
-                <div className="text-[24px]" style={{ color: rarityColor(it.rarity), filter: `drop-shadow(0 0 4px ${rarityColor(it.rarity)}80)` }}>
-                  {it.glyph}
-                </div>
-                <div className="flex-1">
-                  <div className="text-[11px] text-ink">
-                    {it.name}{" "}
-                    <span className="text-[8px]" style={{ color: rarityColor(it.rarity) }}>
-                      [{it.rarity}]
-                    </span>
-                  </div>
-                  <div className="text-[9px] text-ink-dim italic mt-1">{it.desc}</div>
-                  <div className="text-[9px] text-mind-bright mt-1">+ {it.upside}</div>
-                  {it.downside && <div className="text-[9px] text-blood mt-[2px]">- {it.downside}</div>}
-                </div>
-              </div>
-            ))}
+        {visionActive && (
+          <div className="px-2 py-1 text-[8px] text-rare border-b border-rare/30 animate-pulse">
+            ◎ VISAO ATIVA — passe o mouse nas portas
           </div>
         )}
 
-        <div className="mt-6 border-t border-ink-dim/30 pt-3 text-[9px] text-ink-dim space-y-1">
-          <div className="text-ink">EFEITOS COMBINADOS</div>
-          {eff.hintClarity > 0 && <div>+ {eff.hintClarity} clareza nas pistas</div>}
-          {eff.lootMod > 0 && <div>+ {Math.round(eff.lootMod * 100)}% loot</div>}
-          {eff.difficultyMod > 0 && <div className="text-blood">+ {Math.round(eff.difficultyMod * 100)}% dificuldade</div>}
-          {eff.sanityDrainPerRoom > 0 && <div className="text-blood">- {eff.sanityDrainPerRoom} sanidade por sala</div>}
-          {eff.sanityDrainPerRoom < 0 && <div className="text-mind-bright">+ {-eff.sanityDrainPerRoom} sanidade poupada</div>}
-          {eff.trapResist > 0 && <div>{Math.round(eff.trapResist * 100)}% resistencia a armadilhas</div>}
-          {eff.enemyDmgMod < 0 && <div>{Math.round(-eff.enemyDmgMod * 100)}% menos dano de inimigos</div>}
-          {eff.enemyDmgMod > 0 && <div className="text-blood">+ {Math.round(eff.enemyDmgMod * 100)}% dano sofrido</div>}
-          {eff.rareChanceBonus > 0 && <div className="text-rare">+ {Math.round(eff.rareChanceBonus * 100)}% chance de salas raras</div>}
-          {eff.skipChance > 0 && <div>+ {Math.round(eff.skipChance * 100)}% chance de atalho</div>}
-          {eff.visionBonus && <div className="text-rare">visao revela 1 porta por escolha</div>}
-          {eff.mapBonus && <div className="text-mind">mapa parcial das proximas portas</div>}
-          {eff.goldGainOnDoor > 0 && <div>+ {eff.goldGainOnDoor} ouro por porta</div>}
+        <div className="p-2 grid grid-cols-5 sm:grid-cols-6 gap-1 max-h-[200px] overflow-y-auto">
+          {items.length === 0 && (
+            <div className="col-span-full text-[9px] text-ink-dim italic text-center py-3">
+              Maos vazias.
+            </div>
+          )}
+          {items.map((it) => {
+            const locked = !canDiscard(it, currentDoor) && !it.curse;
+            const cursed = it.curse;
+            const dur = currentDoor - it.acquiredAtDoor;
+            const isOlhoVidro = it.active === "olho_vidro";
+            const isUsable = !!it.active;
+            return (
+              <div
+                key={it.uid}
+                className="relative group"
+                onMouseEnter={() => setHovered(it.uid)}
+                onMouseLeave={() => setHovered(null)}
+              >
+                <button
+                  onClick={() => setExpanded(expanded === it.uid ? null : it.uid)}
+                  className={`w-full aspect-square flex items-center justify-center border ${
+                    it.equipped
+                      ? "border-ember bg-ember/10"
+                      : cursed
+                      ? "border-blood/60"
+                      : "border-ink-dim/50"
+                  } hover:border-ember-bright transition-colors relative`}
+                  style={{ color: rarityColor(it.rarity), filter: `drop-shadow(0 0 3px ${rarityColor(it.rarity)}80)` }}
+                >
+                  <span className="text-[14px] sm:text-[16px]">{it.glyph}</span>
+                  {it.equipped && (
+                    <span className="absolute top-[1px] left-[1px] text-[6px] text-ember-bright">E</span>
+                  )}
+                  {locked && (
+                    <span className="absolute bottom-[1px] right-[1px] text-[7px] text-ink-dim">⌂</span>
+                  )}
+                  {cursed && (
+                    <span className="absolute bottom-[1px] left-[1px] text-[7px] text-blood">✝</span>
+                  )}
+                  {isOlhoVidro && canActivateVision && !visionActive && (
+                    <span className="absolute top-[1px] right-[1px] text-[6px] text-rare animate-pulse">●</span>
+                  )}
+                </button>
+
+                {/* Tooltip */}
+                {hovered === it.uid && expanded !== it.uid && (
+                  <div className="absolute right-full mr-2 bottom-0 w-[200px] bg-bg border border-ember/60 p-2 text-[9px] text-ink z-50 pointer-events-none shadow-lg">
+                    <div className="text-[10px]" style={{ color: rarityColor(it.rarity) }}>
+                      {it.name} <span className="text-[7px]">[{it.rarity}]</span>
+                    </div>
+                    <div className="text-ink-dim italic mt-1 text-[8px]">{it.desc}</div>
+                    <div className="mt-1 text-mind-bright text-[8px]">+ {it.upside}</div>
+                    {it.downside && <div className="text-blood text-[8px]">- {it.downside}</div>}
+                    <div className="mt-1 text-ink-dim text-[7px]">
+                      Carregado por {dur} porta{dur !== 1 ? "s" : ""}
+                      {locked ? " — falta " + (2 - dur) : ""}
+                    </div>
+                    {it.slot && (
+                      <div className="text-[7px] text-ember-bright mt-[2px]">
+                        EQUIPAVEL [{it.slot}{it.armorTier ? " — " + it.armorTier : ""}]{it.equipped ? " — EM USO" : ""}
+                      </div>
+                    )}
+                    {it.curse && (
+                      <div className="text-[7px] text-blood mt-[2px]">AMALDICOADO — nao pode ser descartado</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
+
+        {/* Expanded action panel */}
+        {expanded && (() => {
+          const it = items.find((x) => x.uid === expanded);
+          if (!it) return null;
+          const locked = !canDiscard(it, currentDoor);
+          const dur = currentDoor - it.acquiredAtDoor;
+          const isVisionItem = it.active === "olho_vidro";
+          const isConsumable = !!it.active && !isVisionItem && it.active !== "totem_tempo";
+          return (
+            <div className="border-t border-ember/40 p-2 text-[9px] text-ink">
+              <div className="flex items-start gap-2">
+                <span style={{ color: rarityColor(it.rarity), filter: `drop-shadow(0 0 3px ${rarityColor(it.rarity)})` }} className="text-[16px]">{it.glyph}</span>
+                <div className="flex-1">
+                  <div style={{ color: rarityColor(it.rarity) }}>{it.name}</div>
+                  <div className="text-ink-dim italic text-[8px]">{it.desc}</div>
+                  <div className="mt-[2px] text-mind-bright text-[8px]">+ {it.upside}</div>
+                  {it.downside && <div className="text-blood text-[8px]">- {it.downside}</div>}
+                  <div className="text-ink-dim text-[7px] mt-1">
+                    {dur} porta{dur !== 1 ? "s" : ""} carregando
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {isVisionItem && canActivateVision && !visionActive && (
+                  <button
+                    onClick={() => {
+                      onActivateVision();
+                      setExpanded(null);
+                    }}
+                    className="text-[8px] px-2 py-1 border border-rare text-rare hover:bg-rare/20"
+                  >
+                    ATIVAR
+                  </button>
+                )}
+                {isConsumable && (
+                  <button
+                    onClick={() => {
+                      if (it.active === "pocao_vida" || it.active === "pocao_sanidade") {
+                        onUseItem(it.uid);
+                        setExpanded(null);
+                      } else if (inCombat) {
+                        onUseItem(it.uid);
+                        setExpanded(null);
+                      }
+                    }}
+                    disabled={it.active === "bomba_fumaca" && !inCombat}
+                    className="text-[8px] px-2 py-1 border border-ember text-ember hover:bg-ember/20 disabled:border-ink-dim disabled:text-ink-dim"
+                  >
+                    USAR
+                  </button>
+                )}
+                {it.slot && !it.equipped && (
+                  <button
+                    onClick={() => {
+                      onEquip(it.uid);
+                      setExpanded(null);
+                    }}
+                    className="text-[8px] px-2 py-1 border border-ember-bright text-ember-bright hover:bg-ember/20"
+                  >
+                    EQUIPAR
+                  </button>
+                )}
+                {it.slot && it.equipped && (
+                  <button
+                    onClick={() => {
+                      onEquip(it.uid);
+                      setExpanded(null);
+                    }}
+                    className="text-[8px] px-2 py-1 border border-ink-dim text-ink hover:bg-ink/20"
+                  >
+                    DESEQUIPAR
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (canDiscard(it, currentDoor)) {
+                      onDiscard(it.uid);
+                      setExpanded(null);
+                    }
+                  }}
+                  disabled={!canDiscard(it, currentDoor)}
+                  className="text-[8px] px-2 py-1 border border-blood text-blood hover:bg-blood/20 disabled:border-ink-dim disabled:text-ink-dim"
+                >
+                  {it.curse ? "AMALDICOADO" : locked ? `BLOQ (${2 - dur})` : "DESCARTAR"}
+                </button>
+                <button
+                  onClick={() => setExpanded(null)}
+                  className="text-[8px] px-2 py-1 text-ink-dim hover:text-ember-bright ml-auto"
+                >
+                  fechar
+                </button>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
-}
-
-function rarityColor(r: Item["rarity"]) {
-  switch (r) {
-    case "comum":
-      return "#c9c4b0";
-    case "incomum":
-      return "#9bd1ff";
-    case "raro":
-      return "#b87fc9";
-    case "amaldicoado":
-      return "#8b1a1a";
-  }
 }

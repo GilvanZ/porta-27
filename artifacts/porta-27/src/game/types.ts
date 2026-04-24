@@ -27,52 +27,59 @@ export type RoomKind =
 
 export interface Door {
   id: string;
-  doorNumber: number; // the number the door advances TO (or skips to)
-  hints: Hint[];      // shown to player (vague)
-  trueKind: RoomKind; // what's actually behind
-  skipAmount: number; // 1 normally, more for shortcuts
-  shortcutCost?: number; // hp cost for shortcut doors
+  doorNumber: number;
+  hints: Hint[];
+  trueKind: RoomKind;
+  skipAmount: number;
+  shortcutCost?: number;
 }
 
+export type Rarity = "Comum" | "Raro" | "Épico" | "Divino";
+export type EquipSlot = "boots" | "chest" | "helmet" | "weapon";
+export type ArmorTier = "couro" | "ouro" | "adamantium" | "encantada";
+
+export type ActiveKind = "olho_vidro" | "totem_tempo" | "pocao_vida" | "pocao_sanidade" | "bomba_fumaca";
+
 export interface ItemEffect {
-  // Passive modifiers applied each room / each door reveal
-  hintClarity?: number;       // +levels of hint clarity (more clear hints)
-  difficultyMod?: number;     // +makes rooms harder (% chance bumps)
-  lootMod?: number;           // +bonus loot from chests/enemies
+  hintClarity?: number;
+  difficultyMod?: number;
+  lootMod?: number;
   sanityDrainPerRoom?: number;
   hpDrainPerRoom?: number;
-  trapResist?: number;        // 0..1 chance to ignore trap dmg
-  enemyDmgMod?: number;       // multiplier on enemy damage taken
-  rareChanceBonus?: number;   // +flat % to roll rare events
-  skipChance?: number;        // chance a door becomes a shortcut
-  visionBonus?: boolean;      // shows true kind of one door per choice
-  mapBonus?: boolean;         // shows next 5 doors' rough kind
+  trapResist?: number;
+  enemyDmgMod?: number;
+  rareChanceBonus?: number;
+  skipChance?: number;
+  visionBonus?: boolean;
+  mapBonus?: boolean;
   startHp?: number;
   startSanity?: number;
   maxHpBonus?: number;
   maxSanityBonus?: number;
   goldGainOnDoor?: number;
-  // Combat / equipment
-  weaponDmg?: number;       // +flat damage on player attack
-  weaponDmgRandom?: number; // +random 0..n bonus damage
-  escapeBonus?: number;     // +flat % to escape combat
-  critReduction?: number;   // caps incoming damage by this many points
-  killLootBonus?: number;   // bonus % gold/loot when killing an enemy
-  // Active / one-shot
-  revive?: boolean;         // consumed on lethal damage; restores you
-  activeScan?: boolean;     // unlocks "scan" button on doors screen
+  damageReduction?: number;
+  attackBonus?: number;
+  hpRegenPerRoom?: number;
+  falseHints?: number;
 }
 
 export interface Item {
   id: string;
+  uid: string;
   name: string;
   glyph: string;
-  rarity: "comum" | "incomum" | "raro" | "amaldicoado";
+  rarity: Rarity;
   desc: string;
   upside: string;
   downside?: string;
   effect: ItemEffect;
-  tags?: string[]; // for synergy hints
+  tags?: string[];
+  slot?: EquipSlot;
+  armorTier?: ArmorTier;
+  active?: ActiveKind;
+  curse?: boolean;
+  acquiredAtDoor: number;
+  equipped?: boolean;
 }
 
 export interface FloatingText {
@@ -84,7 +91,20 @@ export interface FloatingText {
   born: number;
 }
 
-export type Phase = "title" | "doors" | "room" | "gameover" | "victory";
+export type Phase = "title" | "doors" | "room" | "combat" | "gameover" | "victory";
+
+export interface CombatState {
+  enemyName: string;
+  enemyHp: number;
+  enemyMaxHp: number;
+  enemyDmg: number;
+  defending: boolean;
+  log: string[];
+  rewardGold: number;
+  rewardItemChance: number;
+  isBoss: boolean;
+  turn: number;
+}
 
 export interface RunState {
   hp: number;
@@ -92,17 +112,20 @@ export interface RunState {
   sanity: number;
   maxSanity: number;
   gold: number;
-  doorNumber: number; // current progress (0..100)
+  doorNumber: number;
   phase: Phase;
   items: Item[];
   doors: Door[];
   log: string[];
   roomResolved: boolean;
   currentRoom: { door: Door; eventIndex: number; data: any } | null;
+  combat: CombatState | null;
   bestRun: number;
   totalRuns: number;
   deathCause: string;
   seed: number;
   healGained: number;
   roomsCleared: number;
+  visionActive: boolean;
+  reviveUsed: boolean;
 }

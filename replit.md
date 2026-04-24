@@ -29,3 +29,9 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 ## Artifacts
 
 - **porta-27** — 2D pixel-art roguelike "Porta 27". 100-door corridor, vida + sanidade resources, procedural rooms, item synergies. Frontend-only (no backend). Files in `artifacts/porta-27/src/game/`.
+  - Combat: turn-based encounters (Atacar/Defender/Usar item/Fugir). Flee chance scales with HP ratio. `combat.ts` + `CombatScreen.tsx`.
+  - Items: 4 rarities (Comum/Raro/Épico/Divino). Each item instance has `uid` + `acquiredAtDoor` for tracking. Discard locked until carried 2+ doors; cursed items can't be discarded.
+  - Equipment: 3 armor slots (boots/chest/helmet) + weapon, 4 tiers each (Couro/Ouro/Adamantium/Encantada). Boots also boost shortcut chance.
+  - Active items: Olho de Vidro reveals true door kinds on hover (consumed on next door choice). Totem do Tempo auto-revives 5 doors back on death (one-shot).
+  - Persistent inventory panel in bottom-right (`Inventory.tsx`): hover tooltips, equip/use/discard actions, lock + curse + equipped indicators.
+  - Starter items: 3 low-tier consumables/passives at game start.

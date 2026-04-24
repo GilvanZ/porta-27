@@ -1,15 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import type { RoomData, RoomCtx, RoomResolution } from "./rooms";
-import type { Item, RoomKind } from "./types";
-import type { AggregatedEffects } from "./generate";
-import { CombatScreen } from "./CombatScreen";
+import type { RoomKind } from "./types";
 
 export function RoomScreen({
   room,
   kind,
   ctx,
-  ownedItems,
-  eff,
   resolved,
   onResolve,
   onContinue,
@@ -17,8 +13,6 @@ export function RoomScreen({
   room: RoomData;
   kind: RoomKind;
   ctx: Pick<RoomCtx, "hp" | "sanity" | "gold" | "maxHp" | "maxSanity">;
-  ownedItems: Item[];
-  eff: AggregatedEffects;
   resolved: boolean;
   onResolve: (r: RoomResolution) => void;
   onContinue: () => void;
@@ -50,62 +44,12 @@ export function RoomScreen({
     >
       <RoomAmbient kind={kind} />
 
-      {room.combat && !resolved ? (
-        <div className="relative z-10 w-full">
-          <CombatScreen
-            combat={room.combat}
-            startingHp={ctx.hp}
-            startingSanity={ctx.sanity}
-            ownedItems={ownedItems}
-            eff={eff}
-            onResolve={onResolve}
-          />
-        </div>
-      ) : (
-        <CombatlessHeader room={room} />
-      )}
-
-      {room.combat && !resolved ? null : (
-        <CombatlessBody
-          room={room}
-          resolved={resolved}
-          resultMsg={resultMsg}
-          handleClick={handleClick}
-          onContinue={onContinue}
-        />
-      )}
-    </div>
-  );
-}
-
-function CombatlessHeader({ room }: { room: RoomData }) {
-  return (
-    <>
       <div className={`relative z-10 text-[12px] sm:text-[14px] tracking-[0.25em] sm:tracking-[0.3em] text-shadow-hard text-center ${room.accent}`}>
         {room.title.toUpperCase()}
       </div>
       <div className="relative z-10 text-[9px] text-ink-dim mt-1 italic max-w-[600px] text-center px-2">
         {room.flavor}
       </div>
-    </>
-  );
-}
-
-function CombatlessBody({
-  room,
-  resolved,
-  resultMsg,
-  handleClick,
-  onContinue,
-}: {
-  room: RoomData;
-  resolved: boolean;
-  resultMsg: string | null;
-  handleClick: (fn: (c: any) => RoomResolution) => void;
-  onContinue: () => void;
-}) {
-  return (
-    <>
 
       <pre
         className={`relative z-10 mt-3 sm:mt-4 text-[8px] sm:text-[12px] leading-[1.05] ${room.accent} text-shadow-hard overflow-x-auto max-w-full`}
@@ -137,7 +81,7 @@ function CombatlessBody({
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 }
 

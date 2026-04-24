@@ -4,12 +4,10 @@ export function HUD({
   state,
   onMute,
   muted,
-  onInventory,
 }: {
   state: RunState;
   onMute: () => void;
   muted: boolean;
-  onInventory: () => void;
 }) {
   return (
     <div className="flex flex-col gap-2 text-[10px] text-ink">
@@ -38,12 +36,6 @@ export function HUD({
             PORTA <span className="text-ember-bright text-shadow-ember">{state.doorNumber}</span>
             <span className="text-ink-dim">/100</span>
           </div>
-          <button
-            onClick={onInventory}
-            className="px-2 py-2 sm:py-1 border border-ink-dim text-ink active:bg-ember/20 hover:border-ember hover:text-ember-bright transition-colors text-[9px] min-h-[32px]"
-          >
-            INV ({state.items.length})
-          </button>
           <button
             onClick={onMute}
             className="px-2 py-2 sm:py-1 border border-ink-dim text-ink-dim active:bg-ember/20 hover:text-ember-bright hover:border-ember transition-colors text-[9px] min-h-[32px]"
