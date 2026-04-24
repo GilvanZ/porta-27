@@ -13,7 +13,7 @@ import { GameOver } from "./GameOver";
 import { Victory } from "./Victory";
 import { Inventory } from "./Inventory";
 import { CombatScreen, type CombatAction } from "./CombatScreen";
-import { canDiscard, makeStarterItems, pickRandomItem } from "./items";
+import { canDiscard, makeStarterChoices, pickRandomItem, rarityColor } from "./items";
 import { makeEnemyCombat } from "./combat";
 
 const STORAGE_KEY = "porta27.meta";
@@ -71,6 +71,7 @@ const HEAL_CAP = 10;
 
 type Action =
   | { type: "start"; seed: number }
+  | { type: "pickStarter"; item: Item }
   | { type: "chooseDoor"; door: Door; combat: CombatState | null }
   | {
       type: "applyResolution";
@@ -110,20 +111,27 @@ function recomputeMaxes(state: RunState, items: Item[]): { maxHp: number; maxSan
 function reducer(state: RunState, action: Action): RunState {
   switch (action.type) {
     case "start": {
-      const starters = makeStarterItems();
-      const eff = aggregateEffects(starters);
+      return {
+        ...makeInitialRun(action.seed),
+        phase: "starter-pick",
+        bestRun: state.bestRun,
+        totalRuns: state.totalRuns,
+      };
+    }
+    case "pickStarter": {
+      const items = [action.item];
+      const eff = aggregateEffects(items);
       const maxHp = Math.max(3, 10 + eff.maxHpBonus);
       const maxSanity = Math.max(3, 10 + eff.maxSanityBonus);
       return {
-        ...makeInitialRun(action.seed),
-        items: starters,
+        ...state,
+        items,
         hp: maxHp,
         maxHp,
         sanity: maxSanity,
         maxSanity,
         phase: "doors",
-        bestRun: state.bestRun,
-        totalRuns: state.totalRuns,
+        log: [...state.log, `Voce escolhe ${action.item.name}.`].slice(-30),
       };
     }
     case "chooseDoor": {
@@ -604,7 +612,13 @@ export function Game() {
     setMutedState(m);
   };
 
-  const inGame = state.phase !== "title" && state.phase !== "gameover" && state.phase !== "victory";
+  const starterChoices = useMemo(() => {
+    if (state.phase !== "starter-pick") return [];
+    const r = makeRng((state.seed ^ 0x9e3779b1) >>> 0);
+    return makeStarterChoices(r);
+  }, [state.phase, state.seed]);
+
+  const inGame = state.phase === "doors" || state.phase === "room" || state.phase === "combat";
   const hasOlhoVidro = state.items.some((i) => i.active === "olho_vidro");
   const canActivateVision = hasOlhoVidro && state.phase === "doors" && !state.visionActive;
   const inCombat = state.phase === "combat";
@@ -615,6 +629,16 @@ export function Game() {
 
       {state.phase === "title" && (
         <Title bestRun={state.bestRun} totalRuns={state.totalRuns} onStart={handleStart} />
+      )}
+
+      {state.phase === "starter-pick" && (
+        <StarterPick
+          choices={starterChoices}
+          onPick={(it) => {
+            sfx.treasure();
+            dispatch({ type: "pickStarter", item: it });
+          }}
+        />
       )}
 
       {inGame && (
@@ -702,6 +726,39 @@ export function Game() {
           onActivateVision={() => dispatch({ type: "activateVision" })}
         />
       )}
+    </div>
+  );
+}
+
+function StarterPick({ choices, onPick }: { choices: Item[]; onPick: (i: Item) => void }) {
+  return (
+    <div className="relative z-10 w-full max-w-[800px] px-4 py-8 flex flex-col items-center text-center">
+      <div className="text-[12px] tracking-[0.4em] text-ember-bright text-shadow-ember mb-2">
+        ANTES DA PRIMEIRA PORTA
+      </div>
+      <div className="text-[10px] text-ink-dim italic mb-8 max-w-[520px]">
+        Voce encontra tres objetos no chao do corredor. Pegue apenas um.
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+        {choices.map((it) => (
+          <button
+            key={it.uid}
+            onClick={() => onPick(it)}
+            className="border-2 border-ink-dim hover:border-ember-bright bg-bg/60 hover:bg-ember/10 transition-colors p-4 flex flex-col items-center gap-2 text-center min-h-[180px]"
+          >
+            <div className="text-[36px]" style={{ color: rarityColor(it.rarity) }}>
+              {it.glyph}
+            </div>
+            <div className="text-[11px] text-ink">{it.name}</div>
+            <div className="text-[8px] tracking-widest" style={{ color: rarityColor(it.rarity) }}>
+              [{it.rarity.toUpperCase()}]
+            </div>
+            <div className="text-[9px] text-ink-dim italic mt-1">{it.desc}</div>
+            {it.upside && <div className="text-[8px] text-mind-bright">{it.upside}</div>}
+            {it.downside && <div className="text-[8px] text-blood">{it.downside}</div>}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

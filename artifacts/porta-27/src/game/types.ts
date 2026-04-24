@@ -91,7 +91,7 @@ export interface FloatingText {
   born: number;
 }
 
-export type Phase = "title" | "doors" | "room" | "combat" | "gameover" | "victory";
+export type Phase = "title" | "starter-pick" | "doors" | "room" | "combat" | "gameover" | "victory";
 
 export interface CombatState {
   enemyName: string;

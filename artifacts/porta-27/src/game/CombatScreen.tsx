@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CombatState, Item } from "./types";
 import { applyArmor, consumableEffect, fleeChance } from "./combat";
 import type { AggregatedEffects } from "./generate";
@@ -38,6 +38,25 @@ export function CombatScreen({
   resolved: boolean;
 }) {
   const [showItems, setShowItems] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  // Reset waiting if combat resolves (won/fled/died)
+  useEffect(() => {
+    if (resolved) {
+      setWaiting(false);
+      if (timerRef.current) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+  }, [resolved]);
 
   const usableItems = useMemo(
     () => items.filter((i) => i.active && i.active !== "totem_tempo" && i.active !== "olho_vidro"),
@@ -48,6 +67,7 @@ export function CombatScreen({
   const flee = fleeChance(hp, maxHp, combat.isBoss);
 
   const doAttack = () => {
+    if (waiting) return;
     const dmg = Math.max(1, playerAtk + intBetween(Math.random, 0, 2));
     const newEnemyHp = Math.max(0, combat.enemyHp - dmg);
     sfx.hit();
@@ -64,16 +84,25 @@ export function CombatScreen({
       });
       return;
     }
-    // enemy counter
-    const raw = combat.enemyDmg + intBetween(Math.random, 0, 1);
-    const took = applyArmor(raw, eff, false);
-    if (took > 0) sfx.hit();
+    // Player hit only — enemy counter delayed
     onAction({
       type: "playerAttack",
       enemyHpDelta: -dmg,
-      playerHpDelta: -took,
-      message: `Voce acerta ${dmg}. ${combat.enemyName} contra-ataca (-${took} vida).`,
+      message: `Voce acerta ${dmg} em ${combat.enemyName}.`,
     });
+    setWaiting(true);
+    timerRef.current = window.setTimeout(() => {
+      const raw = combat.enemyDmg + intBetween(Math.random, 0, 1);
+      const took = applyArmor(raw, eff, false);
+      if (took > 0) sfx.hit();
+      onAction({
+        type: "playerAttack",
+        playerHpDelta: -took,
+        message: took > 0 ? `${combat.enemyName} contra-ataca (-${took} vida).` : `${combat.enemyName} erra o golpe.`,
+      });
+      setWaiting(false);
+      timerRef.current = null;
+    }, 2500);
   };
 
   const doDefend = () => {
@@ -188,6 +217,17 @@ export function CombatScreen({
           >
             CONTINUAR ►
           </button>
+        </div>
+      ) : waiting ? (
+        <div className="relative z-10 mt-4 flex flex-col items-center gap-2">
+          <div className="text-[10px] text-blood tracking-[0.3em] flicker">
+            {combat.enemyName.toUpperCase()} SE PREPARA...
+          </div>
+          <div className="flex gap-1">
+            <span className="text-blood animate-pulse">●</span>
+            <span className="text-blood animate-pulse" style={{ animationDelay: "0.2s" }}>●</span>
+            <span className="text-blood animate-pulse" style={{ animationDelay: "0.4s" }}>●</span>
+          </div>
         </div>
       ) : showItems ? (
         <div className="relative z-10 mt-4 flex flex-col gap-2 items-stretch w-full max-w-[420px]">

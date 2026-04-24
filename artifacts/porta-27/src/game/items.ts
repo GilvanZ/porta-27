@@ -389,6 +389,27 @@ export function makeStarterItems(): Item[] {
     .map((t) => instantiate(t, 0));
 }
 
+const STARTER_POOL_IDS = [
+  "faca_enferrujada",
+  "luva_couro",
+  "moeda_pesada",
+  "pocao_vida",
+  "pocao_sanidade",
+  "olho_falso",
+];
+
+export function makeStarterChoices(rng: () => number): Item[] {
+  const pool = STARTER_POOL_IDS.slice();
+  const out: Item[] = [];
+  for (let i = 0; i < 3 && pool.length > 0; i++) {
+    const idx = Math.floor(rng() * pool.length);
+    const id = pool.splice(idx, 1)[0];
+    const t = ALL_ITEMS_TEMPLATES.find((x) => x.id === id);
+    if (t) out.push(instantiate(t, 0));
+  }
+  return out;
+}
+
 export function instantiateById(id: string, doorNumber: number): Item | null {
   const t = ALL_ITEMS_TEMPLATES.find((x) => x.id === id);
   return t ? instantiate(t, doorNumber) : null;
