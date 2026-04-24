@@ -350,13 +350,13 @@ function instantiate(t: Template, doorNumber: number): Item {
   };
 }
 
+function tierWeight(r: Rarity, dn: number): number {
+  const base: Record<Rarity, number> = { Comum: 50, Raro: 28, "Épico": 15, Divino: 7 };
+  const prog = Math.min(1, dn / 80);
+  return base[r] * (r === "Comum" ? 1 - prog * 0.5 : 1 + prog * (r === "Divino" ? 1.5 : r === "Épico" ? 0.8 : 0.3));
+}
+
 export function pickRandomItem(rng: () => number, doorNumber: number, exclude: string[] = []): Item {
-  // weight by rarity & door progress
-  const tierWeight = (r: Rarity, dn: number) => {
-    const base = { Comum: 50, Raro: 28, "Épico": 15, Divino: 7 } as Record<Rarity, number>;
-    const prog = Math.min(1, dn / 80);
-    return base[r] * (r === "Comum" ? 1 - prog * 0.5 : 1 + prog * (r === "Divino" ? 1.5 : r === "Épico" ? 0.8 : 0.3));
-  };
   const pool = ALL_ITEMS_TEMPLATES.filter((t) => !exclude.includes(t.id));
   const list = pool.length ? pool : ALL_ITEMS_TEMPLATES;
   const weights = list.map((t) => tierWeight(t.rarity, doorNumber));
@@ -368,6 +368,24 @@ export function pickRandomItem(rng: () => number, doorNumber: number, exclude: s
   }
   return instantiate(list[list.length - 1], doorNumber);
 }
+
+export function itemAppearanceChance(doorNumber: number, ownedIds: string[] = []): Record<string, number> {
+  const pool = ALL_ITEMS_TEMPLATES.filter((t) => !ownedIds.includes(t.id));
+  const list = pool.length ? pool : ALL_ITEMS_TEMPLATES;
+  const weights = list.map((t) => tierWeight(t.rarity, doorNumber));
+  const total = weights.reduce((a, b) => a + b, 0) || 1;
+  const out: Record<string, number> = {};
+  for (let i = 0; i < list.length; i++) {
+    out[list[i].id] = (weights[i] / total) * 100;
+  }
+  // Items already owned have 0% chance to drop again
+  for (const id of ownedIds) {
+    if (out[id] === undefined) out[id] = 0;
+  }
+  return out;
+}
+
+export const RARITY_RANK: Record<Rarity, number> = { Comum: 0, Raro: 1, "Épico": 2, Divino: 3 };
 
 export function pickShopItems(rng: () => number, owned: string[], doorNumber: number): Item[] {
   const out: Item[] = [];
