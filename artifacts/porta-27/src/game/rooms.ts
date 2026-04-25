@@ -57,9 +57,9 @@ const ART = {
   enemy: `      .   .    .  .
    ╲╱╲╱╲      ╱╲╱
    ▓▓▓▓▓▓▓▓▓▓▓▓▓
-   ▓ ◉   ◉ ▓
-   ▓   ▼   ▓
-   ▓ ▓▓▓▓▓ ▓
+   ▓ ◉   ◉    ▓
+   ▓   ▼       ▓
+   ▓ ▓▓▓▓▓     ▓
    ▓▓▓▓▓▓▓▓▓▓▓▓▓
         ╱  ╲`,
   chest: `        .  ✦   .
@@ -254,12 +254,23 @@ export function buildRoom(door: Door, ctx: RoomCtx): RoomData {
     }
 
     case "chest": {
+      const hasLeverTool = items.some((i) => i.active === "pe_de_cabra");
+      const leverItemId = items.find((i) => i.active === "pe_de_cabra")?.id;
+      
       return {
         title: "Bau Empoeirado",
         flavor: "A tampa range so de voce olhar.",
         accent: "text-gold",
         art: ART.chest,
         options: [
+          ...(hasLeverTool ? [{
+            label: "Usar Pe de Cabra",
+            resolve: () => {
+              const it = pickRandomItem(rng, ctx.doorNumber, items.map((i) => i.id));
+              const g = intBetween(rng, 5, 10) + Math.floor(eff.lootMod * 6);
+              return { itemGained: it, goldDelta: g, itemRemovedId: leverItemId, message: `Bau aberto com precisao! ${it.name} + ${g} moedas. (Pe de Cabra consumido)`, end: true };
+            },
+          }] : []),
           {
             label: "Abrir",
             resolve: () => {

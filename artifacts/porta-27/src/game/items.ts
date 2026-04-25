@@ -160,6 +160,17 @@ const CONSUMABLES: Template[] = [
     effect: {},
     tags: ["combate"],
   },
+  {
+    id: "pe_de_cabra",
+    name: "Pe de Cabra",
+    glyph: "⚒",
+    rarity: "Raro",
+    active: "pe_de_cabra",
+    desc: "Uma alavanca de ferro retorcida.",
+    upside: "Abre qualquer bau garantidamente (consumido)",
+    effect: {},
+    tags: ["ferramenta", "tesouro"],
+  },
 ];
 
 const PASSIVES: Template[] = [
