@@ -37,6 +37,7 @@ export interface RoomResolution {
   goldDelta?: number;
   itemGained?: Item | null;
   itemRemovedId?: string;
+  itemUsedUid?: string;
   message: string;
   extraDoorAdvance?: number; // additional door progression beyond the door taken
   extraDoorRetreat?: number;
@@ -138,7 +139,11 @@ export function buildRoom(door: Door, ctx: RoomCtx): RoomData {
       const drainHp = chance(rng, 0.15) ? 1 : 0;
       return {
         title: "Sala Vazia",
-        flavor: "O ar parou. Voce escuta sua propria respiracao.",
+        flavor: pick(rng, [
+          "O corredor morreu em silencio. Apenas a sua respiração responde.",
+          "A poeira cai lento no escuro. A luz do seu lampião é o único movimento.",
+          "Uma quietude pesada toma o espaço. Parece que algo observa sem fazer barulho.",
+        ]),
         accent: "text-ink",
         art: ART.empty,
         options: [
@@ -149,11 +154,37 @@ export function buildRoom(door: Door, ctx: RoomCtx): RoomData {
               sanityDelta: chance(rng, 0.2) ? -1 : 0,
               message:
                 drainHp > 0
-                  ? "Algo te tocou na escuridao. (-1 vida)"
+                  ? "Algo te toca na escuridao. (-1 vida)"
                   : "Voce atravessa sem incidentes.",
               end: true,
             }),
           },
+          ...(items.some((i) => i.active === "lanterna")
+            ? [
+                {
+                  label: "Usar Lanterna",
+                  resolve: () => {
+                    const hasGold = chance(rng, 0.6);
+                    if (hasGold) {
+                      const g = intBetween(rng, 1, 4);
+                      return {
+                        goldDelta: g,
+                        message: `Lanterna: ha moedas no canto da sala. (+${g} moedas)`,
+                        itemUsedUid: items.find((i) => i.active === "lanterna")?.uid,
+                        end: true,
+                      };
+                    }
+                    const it = pickRandomItem(rng, ctx.doorNumber, items.map((i) => i.id));
+                    return {
+                      itemGained: it,
+                      message: `Lanterna: voce ve um item no chao. (${it.name})`,
+                      itemUsedUid: items.find((i) => i.active === "lanterna")?.uid,
+                      end: true,
+                    };
+                  },
+                },
+              ]
+            : []),
           {
             label: "Procurar nos cantos",
             resolve: () => {
@@ -255,11 +286,14 @@ export function buildRoom(door: Door, ctx: RoomCtx): RoomData {
 
     case "chest": {
       const hasLeverTool = items.some((i) => i.active === "pe_de_cabra");
-      const leverItemId = items.find((i) => i.active === "pe_de_cabra")?.id;
-      
+      const leverItemUid = items.find((i) => i.active === "pe_de_cabra")?.uid;
       return {
         title: "Bau Empoeirado",
-        flavor: "A tampa range so de voce olhar.",
+        flavor: pick(rng, [
+          "A tampa range como se algo mais pesado estivesse preso dentro.",
+          "O bau parece antigo demais para ser aberto sem cuidado.",
+          "Uma trava enferrujada guarda o tesouro, mas tambem perigo.",
+        ]),
         accent: "text-gold",
         art: ART.chest,
         options: [
@@ -268,7 +302,13 @@ export function buildRoom(door: Door, ctx: RoomCtx): RoomData {
             resolve: () => {
               const it = pickRandomItem(rng, ctx.doorNumber, items.map((i) => i.id));
               const g = intBetween(rng, 5, 10) + Math.floor(eff.lootMod * 6);
-              return { itemGained: it, goldDelta: g, itemRemovedId: leverItemId, message: `Bau aberto com precisao! ${it.name} + ${g} moedas. (Pe de Cabra consumido)`, end: true };
+              return {
+                itemGained: it,
+                goldDelta: g,
+                itemUsedUid: leverItemUid,
+                message: `Bau aberto com precisao! ${it.name} + ${g} moedas. (Pe de Cabra consumido)`,
+                end: true,
+              };
             },
           }] : []),
           {
@@ -627,17 +667,19 @@ export function buildRoom(door: Door, ctx: RoomCtx): RoomData {
       const cost = door.shortcutCost ?? 2;
       return {
         title: "Atalho Apertado",
-        flavor: `Um corredor comprime ${door.skipAmount} portas em uma so. Vai cobrar ${cost} de vida.`,
+        flavor: `Um corredor comprime ${door.skipAmount} portas em uma so. Pode cobrar ${cost} de vida, mas talvez seja rapido demais para ferir.
+`,
         accent: "text-ember",
         art: ART.shortcut,
         options: [
           {
-            label: "Atravessar",
-            resolve: () => ({
-              hpDelta: -cost,
-              message: `Voce passa ofegante. (-${cost} vida)`,
-              end: true,
-            }),
+            label: "Forcar o atalho",
+            resolve: () => {
+              if (chance(rng, 0.45 + (eff.skipChance ?? 0) * 0.25)) {
+                return { message: "Voce atravessa sem ferimentos.", end: true };
+              }
+              return { hpDelta: -cost, message: `O corredor corta voce. (-${cost} vida)`, end: true };
+            },
           },
           {
             label: "Voltar e tentar outra porta",

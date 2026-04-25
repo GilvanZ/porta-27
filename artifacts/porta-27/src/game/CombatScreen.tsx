@@ -38,130 +38,237 @@ export function CombatScreen({
   resolved: boolean;
 }) {
   const [showItems, setShowItems] = useState(false);
-  const [waiting, setWaiting] = useState(false);
+  const [combatPhase, setCombatPhase] = useState<"idle" | "playerDelay" | "enemyDelay" | "playerDamageDelay" | "playerDamageAnim" | "resolved">("idle");
+  const [displayEnemyHp, setDisplayEnemyHp] = useState(combat.enemyHp);
+  const [displayPlayerHp, setDisplayPlayerHp] = useState(hp);
+  const [actionLabel, setActionLabel] = useState<string | null>(null);
+  const [damageLabel, setDamageLabel] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
+  const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (timerRef.current) window.clearTimeout(timerRef.current);
+      if (intervalRef.current) window.clearInterval(intervalRef.current);
     };
   }, []);
 
-  // Reset waiting if combat resolves (won/fled/died)
   useEffect(() => {
     if (resolved) {
-      setWaiting(false);
+      setCombatPhase("resolved");
       if (timerRef.current) {
         window.clearTimeout(timerRef.current);
         timerRef.current = null;
       }
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     }
   }, [resolved]);
 
+  useEffect(() => {
+    if (resolved) return;
+    clearTimers();
+    setCombatPhase("idle");
+    setDisplayEnemyHp(combat.enemyHp);
+    setDisplayPlayerHp(hp);
+    setActionLabel(null);
+    setDamageLabel(null);
+  }, [combat.enemyName, combat.enemyMaxHp, combat.enemyHp, hp, resolved]);
+
+  useEffect(() => {
+    if (combatPhase === "idle") {
+      setDisplayEnemyHp(combat.enemyHp);
+      setDisplayPlayerHp(hp);
+    }
+  }, [combat.enemyHp, hp, combatPhase]);
+
+  useEffect(() => {
+    if (combat.enemyHp !== displayEnemyHp && combatPhase === "idle") {
+      setDisplayEnemyHp(combat.enemyHp);
+    }
+  }, [combat.enemyHp, displayEnemyHp, combatPhase]);
+
   const usableItems = useMemo(
-    () => items.filter((i) => i.active && i.active !== "totem_tempo" && i.active !== "olho_vidro"),
+    () => items.filter((i) => i.active && i.active !== "totem_tempo" && i.active !== "olho_vidro" && i.active !== "lanterna"),
     [items]
   );
 
   const playerAtk = 2 + eff.attackBonus;
   const flee = fleeChance(hp, maxHp, combat.isBoss);
+  const busy = combatPhase !== "idle" && combatPhase !== "resolved";
 
-  const doAttack = () => {
-    if (waiting) return;
-    const dmg = Math.max(1, playerAtk + intBetween(Math.random, 0, 2));
-    const newEnemyHp = Math.max(0, combat.enemyHp - dmg);
-    sfx.hit();
-    if (newEnemyHp <= 0) {
-      const reward = combat.rewardGold;
-      sfx.coin();
-      onAction({
-        type: "victory",
-        enemyHpDelta: -dmg,
-        goldDelta: reward,
-        itemGainedFromVictory: Math.random() < combat.rewardItemChance,
-        message: `Voce derrota ${combat.enemyName}. (+${reward} ouro)`,
-        endCombat: "win",
-      });
+  function clearTimers() {
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }
+
+  const animateHpChange = (
+    from: number,
+    to: number,
+    setter: (value: number) => void,
+    onComplete: () => void
+  ) => {
+    if (intervalRef.current) window.clearInterval(intervalRef.current);
+    const delta = from > to ? -1 : 1;
+    let value = from;
+    if (from === to) {
+      onComplete();
       return;
     }
-    // Player hit only — enemy counter delayed
-    onAction({
-      type: "playerAttack",
-      enemyHpDelta: -dmg,
-      message: `Voce acerta ${dmg} em ${combat.enemyName}.`,
-    });
-    setWaiting(true);
+    intervalRef.current = window.setInterval(() => {
+      value += delta;
+      setter(value);
+      if ((delta < 0 && value <= to) || (delta > 0 && value >= to)) {
+        if (intervalRef.current) window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+        onComplete();
+      }
+    }, 150);
+  };
+
+  const scheduleEnemyAttack = (attackDelay: number, took: number, message: string) => {
+    setCombatPhase("enemyDelay");
     timerRef.current = window.setTimeout(() => {
-      const raw = combat.enemyDmg + intBetween(Math.random, 0, 1);
-      const took = applyArmor(raw, eff, false);
-      if (took > 0) sfx.hit();
-      onAction({
+      setActionLabel(`${combat.enemyName.toUpperCase()} ataca...`);
+      setCombatPhase("playerDamageDelay");
+      timerRef.current = window.setTimeout(() => {
+        setDamageLabel(`-${took}`);
+        setCombatPhase("playerDamageAnim");
+        animateHpChange(displayPlayerHp, Math.max(0, hp - took), setDisplayPlayerHp, () => {
+          onAction({
+            type: "playerAttack",
+            playerHpDelta: -took,
+            message,
+          });
+          setDamageLabel(null);
+          setActionLabel(null);
+          setCombatPhase("idle");
+        });
+      }, 2000);
+    }, attackDelay);
+  };
+
+  const schedulePlayerAction = (
+    action: CombatAction,
+    enemyDamage?: number,
+    shouldScheduleEnemyAttack = true
+  ) => {
+    setCombatPhase("playerDelay");
+    setActionLabel("Voce age...");
+    timerRef.current = window.setTimeout(() => {
+      onAction(action);
+      setDamageLabel(action.enemyHpDelta ? `${action.enemyHpDelta}` : null);
+      const enemyAlive = combat.enemyHp + (action.enemyHpDelta ?? 0) > 0;
+      const willEndCombat = action.endCombat === "win" || action.endCombat === "fled";
+
+      if (enemyAlive && shouldScheduleEnemyAttack && !willEndCombat) {
+        const newEnemyHp = Math.max(0, combat.enemyHp + (action.enemyHpDelta ?? 0));
+        setCombatPhase("idle");
+        animateHpChange(displayEnemyHp, newEnemyHp, setDisplayEnemyHp, () => {
+          setDamageLabel(null);
+          setActionLabel(null);
+          scheduleEnemyAttack(2000, enemyDamage ?? 0, `${combat.enemyName} contra-ataca (-${enemyDamage ?? 0} vida).`);
+        });
+      } else {
+        setDamageLabel(null);
+        setActionLabel(null);
+        setCombatPhase(willEndCombat || !enemyAlive ? "resolved" : "idle");
+      }
+    }, 2000);
+  };
+
+  const doAttack = () => {
+    if (busy || resolved) return;
+    const dmg = Math.max(1, playerAtk + intBetween(Math.random, 0, 2));
+    const raw = combat.enemyDmg + intBetween(Math.random, 0, 1);
+    const took = applyArmor(raw, eff, false);
+    schedulePlayerAction(
+      {
         type: "playerAttack",
-        playerHpDelta: -took,
-        message: took > 0 ? `${combat.enemyName} contra-ataca (-${took} vida).` : `${combat.enemyName} erra o golpe.`,
-      });
-      setWaiting(false);
-      timerRef.current = null;
-    }, 2500);
+        enemyHpDelta: -dmg,
+        message: `Voce acerta ${dmg} em ${combat.enemyName}.`,
+      },
+      took
+    );
+    if (dmg > 0) sfx.hit();
   };
 
   const doDefend = () => {
+    if (busy || resolved) return;
     const raw = combat.enemyDmg + intBetween(Math.random, 0, 1);
     const took = applyArmor(raw, eff, true);
-    onAction({
-      type: "playerDefend",
-      playerHpDelta: -took,
-      message: took > 0 ? `Voce se protege. (-${took} vida)` : `Voce bloqueia o golpe.`,
-    });
+    schedulePlayerAction(
+      {
+        type: "playerDefend",
+        playerHpDelta: -took,
+        message: took > 0 ? `Voce se protege. (-${took} vida)` : `Voce bloqueia o golpe.`,
+      },
+      took,
+      true
+    );
   };
 
   const doFlee = () => {
-    if (Math.random() < flee) {
-      onAction({
+    if (busy || resolved) return;
+    const success = Math.random() < flee;
+    if (success) {
+      schedulePlayerAction({
         type: "flee",
         playerSanityDelta: -1,
         message: "Voce escapa entre as sombras. (-1 sanidade)",
         endCombat: "fled",
       });
-    } else {
-      const raw = combat.enemyDmg + 1;
-      const took = applyArmor(raw, eff, false);
-      sfx.hit();
-      onAction({
+      return;
+    }
+    const raw = combat.enemyDmg + 1;
+    const took = applyArmor(raw, eff, false);
+    schedulePlayerAction(
+      {
         type: "flee",
         playerHpDelta: -took,
         playerSanityDelta: -1,
         message: `Falhou. Te alcancou. (-${took} vida, -1 sanidade)`,
-      });
-    }
+      },
+      0,
+      false
+    );
   };
 
   const doUseItem = (item: Item) => {
+    if (busy || resolved) return;
     const cef = consumableEffect(item);
     if (!cef) return;
     setShowItems(false);
     if (cef.type === "heal") {
-      sfx.heal();
-      onAction({
+      schedulePlayerAction({
         type: "useItem",
         playerHpDelta: cef.amount,
         itemUsedUid: item.uid,
         message: `Voce bebe ${item.name}. (+${cef.amount} vida)`,
-      });
+      }, 0);
+      sfx.heal();
     } else if (cef.type === "sanity") {
-      onAction({
+      schedulePlayerAction({
         type: "useItem",
         playerSanityDelta: cef.amount,
         itemUsedUid: item.uid,
         message: `Voce bebe ${item.name}. (+${cef.amount} sanidade)`,
-      });
+      }, 0, true);
     } else if (cef.type === "smoke") {
-      onAction({
+      schedulePlayerAction({
         type: "useItem",
         itemUsedUid: item.uid,
         message: `Voce explode ${item.name} e foge na fumaca.`,
         endCombat: "fled",
-      });
+      }, 0, false);
     }
   };
 
@@ -171,6 +278,17 @@ export function CombatScreen({
         {combat.isBoss ? "CHEFE — " : "COMBATE — "}{combat.enemyName.toUpperCase()}
       </div>
       <div className="text-[9px] text-ink-dim mt-1 italic">Turno {combat.turn}</div>
+
+      {combat.enemyImage && (
+        <div className="mt-4 w-full max-w-[260px] sm:max-w-[320px]">
+          <img
+            src={combat.enemyImage}
+            alt={combat.enemyName}
+            className="mx-auto block max-h-[160px] w-full object-contain rounded bg-transparent border-none"
+            style={{ backgroundColor: "transparent" }}
+          />
+        </div>
+      )}
 
       {/* Enemy bar */}
       <div className="mt-3 flex items-center gap-3 text-[10px] text-ink">
@@ -182,23 +300,22 @@ export function CombatScreen({
               className="h-3"
               style={{
                 width: 6,
-                background: i < combat.enemyHp ? "#8b1a1a" : "#1a1d28",
-                border: `1px solid ${i < combat.enemyHp ? "#d97a2a" : "#2a2d38"}`,
+                background: i < displayEnemyHp ? "#8b1a1a" : "#1a1d28",
+                border: `1px solid ${i < displayEnemyHp ? "#d97a2a" : "#2a2d38"}`,
+                opacity: damageLabel && i >= displayEnemyHp && i < displayEnemyHp + 1 ? 0.95 : 1,
               }}
             />
           ))}
         </div>
-        <span className="text-ink-dim">{combat.enemyHp}/{combat.enemyMaxHp}</span>
+        <span className="text-ink-dim">{displayEnemyHp}/{combat.enemyMaxHp}</span>
       </div>
 
-      <pre className="relative z-10 mt-3 text-[10px] sm:text-[12px] text-blood text-shadow-hard">
-{`     ╲╱╲╱╲      ╱╲╱
-   ▓▓▓▓▓▓▓▓▓▓▓▓▓
-   ▓ ◉   ◉ ▓
-   ▓   ▼   ▓
-   ▓ ▓▓▓▓▓ ▓
-   ▓▓▓▓▓▓▓▓▓▓▓▓▓`}
-      </pre>
+      {actionLabel && (
+        <div className="mt-2 text-[9px] text-ember text-center w-full">{actionLabel}</div>
+      )}
+      {damageLabel && (
+        <div className="mt-1 text-[20px] text-blood font-black text-center drop-shadow-lg">{damageLabel}</div>
+      )}
 
       {/* Combat log (last 3) */}
       <div className="mt-3 text-[9px] text-ink-dim italic max-w-[500px] text-center px-2">
@@ -218,7 +335,7 @@ export function CombatScreen({
             CONTINUAR ►
           </button>
         </div>
-      ) : waiting ? (
+      ) : busy ? (
         <div className="relative z-10 mt-4 flex flex-col items-center gap-2">
           <div className="text-[10px] text-blood tracking-[0.3em] flicker">
             {combat.enemyName.toUpperCase()} SE PREPARA...
@@ -283,6 +400,28 @@ export function CombatScreen({
           </button>
         </div>
       )}
+
+      <div className="mt-4 flex items-center gap-2 text-[10px] text-ink">
+        <div className="text-[9px] text-ink-dim">SUA VIDA</div>
+        <div className="flex gap-[2px]" style={{ filter: "drop-shadow(0 0 4px #d97a2a40)" }}>
+          {Array.from({ length: 10 }).map((_, i) => {
+            const filled = i < displayPlayerHp;
+            return (
+              <div
+                key={i}
+                className="h-3"
+                style={{
+                  width: 10,
+                  background: filled ? "#8b1a1a" : "#1a1d28",
+                  border: `1px solid ${filled ? "#d97a2a" : "#2a2d38"}`,
+                  opacity: filled ? 1 : 0.45,
+                }}
+              />
+            );
+          })}
+        </div>
+        <span className="text-ink-dim">{displayPlayerHp}/{maxHp}</span>
+      </div>
     </div>
   );
 }

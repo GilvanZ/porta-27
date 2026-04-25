@@ -102,9 +102,10 @@ type Action =
 
 function recomputeMaxes(state: RunState, items: Item[]): { maxHp: number; maxSanity: number } {
   const eff = aggregateEffects(items);
+  const maxHp = Math.max(3, 10 + eff.maxHpBonus);
   return {
-    maxHp: Math.max(3, 10 + eff.maxHpBonus),
-    maxSanity: Math.max(3, 10 + eff.maxSanityBonus),
+    maxHp,
+    maxSanity: maxHp,
   };
 }
 
@@ -122,14 +123,13 @@ function reducer(state: RunState, action: Action): RunState {
       const items = [action.item];
       const eff = aggregateEffects(items);
       const maxHp = Math.max(3, 10 + eff.maxHpBonus);
-      const maxSanity = Math.max(3, 10 + eff.maxSanityBonus);
       return {
         ...state,
         items,
         hp: maxHp,
         maxHp,
-        sanity: maxSanity,
-        maxSanity,
+        sanity: maxHp,
+        maxSanity: maxHp,
         phase: "doors",
         log: [...state.log, `Voce escolhe ${action.item.name}.`].slice(-30),
       };
@@ -180,6 +180,17 @@ function reducer(state: RunState, action: Action): RunState {
       if (p.itemRemovedId) {
         const idx = items.findIndex((i) => i.id === p.itemRemovedId);
         if (idx >= 0) items.splice(idx, 1);
+      }
+      if (p.itemUsedUid) {
+        const idx = items.findIndex((i) => i.uid === p.itemUsedUid);
+        if (idx >= 0) {
+          const current = items[idx];
+          if (current.charges && current.charges > 1) {
+            items[idx] = { ...current, charges: current.charges - 1 };
+          } else {
+            items = items.filter((i) => i.uid !== p.itemUsedUid);
+          }
+        }
       }
       if (p.itemGained) items.push(p.itemGained);
 
@@ -317,16 +328,26 @@ function reducer(state: RunState, action: Action): RunState {
       let hp = state.hp;
       let sanity = state.sanity;
       let msg = "";
+      let items = state.items;
+
       if (target.active === "pocao_vida") {
         hp = Math.min(state.maxHp, hp + 4);
         msg = `Voce bebe ${target.name}. (+4 vida)`;
+        items = items.filter((i) => i.uid !== action.uid);
       } else if (target.active === "pocao_sanidade") {
         sanity = Math.min(state.maxSanity, sanity + 4);
         msg = `Voce bebe ${target.name}. (+4 sanidade)`;
+        items = items.filter((i) => i.uid !== action.uid);
+      } else if (target.active === "lanterna") {
+        msg = `Voce acende ${target.name}. Restam ${Math.max(0, (target.charges ?? 1) - 1)} usos.`;
+        if (target.charges && target.charges > 1) {
+          items = items.map((i) => (i.uid === action.uid ? { ...i, charges: i.charges! - 1 } : i));
+        } else {
+          items = items.filter((i) => i.uid !== action.uid);
+        }
       } else {
         return state;
       }
-      const items = state.items.filter((i) => i.uid !== action.uid);
       return { ...state, items, hp, sanity, log: [...state.log, msg].slice(-30) };
     }
     case "activateVision": {
@@ -350,7 +371,18 @@ function reducer(state: RunState, action: Action): RunState {
       const a = action.action;
       const newEnemyHp = Math.max(0, state.combat.enemyHp + (a.enemyHpDelta ?? 0));
       let items = state.items;
-      if (a.itemUsedUid) items = items.filter((i) => i.uid !== a.itemUsedUid);
+      if (a.itemUsedUid) {
+        const idx = items.findIndex((i) => i.uid === a.itemUsedUid);
+        if (idx >= 0) {
+          const current = items[idx];
+          if (current.charges && current.charges > 1) {
+            items = [...items];
+            items[idx] = { ...current, charges: current.charges - 1 };
+          } else {
+            items = items.filter((i) => i.uid !== a.itemUsedUid);
+          }
+        }
+      }
       if (a.itemGainedFromVictory && action.itemGained) items = [...items, action.itemGained];
       const { maxHp, maxSanity } = recomputeMaxes(state, items);
       const newHp = Math.max(0, Math.min(maxHp, state.hp + (a.playerHpDelta ?? 0)));
@@ -365,7 +397,7 @@ function reducer(state: RunState, action: Action): RunState {
       if (newHp <= 0) {
         phase = "gameover";
         deathCause = `${state.combat.enemyName} te derrubou.`;
-      } else if (a.endCombat === "win" || a.endCombat === "fled") {
+      } else if (newEnemyHp <= 0 || a.endCombat === "win" || a.endCombat === "fled") {
         resolved = true;
       }
 

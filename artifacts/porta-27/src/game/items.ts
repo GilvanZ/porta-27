@@ -161,6 +161,18 @@ const CONSUMABLES: Template[] = [
     tags: ["combate"],
   },
   {
+    id: "lanterna",
+    name: "Lanterna",
+    glyph: "✦",
+    rarity: "Raro",
+    active: "lanterna",
+    desc: "Uma lamparina de vidro com luz fraca.",
+    upside: "Revela loot em salas vazias. Dura 3 usos.",
+    effect: {},
+    charges: 3,
+    tags: ["visao", "utilitario"],
+  },
+  {
     id: "pe_de_cabra",
     name: "Pe de Cabra",
     glyph: "⚒",

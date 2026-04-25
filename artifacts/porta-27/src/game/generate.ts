@@ -70,17 +70,17 @@ export function aggregateEffects(items: Item[]): AggregatedEffects {
 }
 
 const HINT_BANK_BY_KIND: Record<RoomKind, Hint[]> = {
-  empty: ["SILENCIO ABSOLUTO", "FRIO INTENSO", "??????"],
+  empty: ["SILENCIO ABSOLUTO", "FRIO INTENSO", "SALA SEGURA", "??????"],
   enemy: ["PERIGO ALTO", "PRESENCA VIVA", "CHEIRO DE FERRO", "MURMURIOS"],
-  trap: ["SONS METALICOS", "SILENCIO ABSOLUTO", "FRIO INTENSO", "??????"],
-  chest: ["TESOURO", "LUZ DISTANTE", "??????"],
-  puzzle: ["EVENTO ESTRANHO", "MURMURIOS", "??????"],
-  npc: ["MURMURIOS", "PRESENCA VIVA", "EVENTO ESTRANHO"],
-  shop: ["LUZ DISTANTE", "TESOURO", "MURMURIOS"],
+  trap: ["SONS METALICOS", "FRIO INTENSO", "CHEIRO DE FERRO", "??????"],
+  chest: ["TESOURO", "LUZ DISTANTE", "SALA SEGURA", "??????"],
+  puzzle: ["EVENTO ESTRANHO", "MURMURIOS", "LUZ DISTANTE", "??????"],
+  npc: ["PRESENCA VIVA", "EVENTO ESTRANHO", "LUZ DISTANTE"],
+  shop: ["LUZ DISTANTE", "TESOURO", "SALA SEGURA"],
   shrine: ["LUZ DISTANTE", "EVENTO ESTRANHO", "SILENCIO ABSOLUTO"],
   boss: ["PERIGO ALTO", "PRESENCA VIVA", "CHEIRO DE FERRO", "SONS METALICOS"],
-  rare: ["EVENTO ESTRANHO", "LUZ DISTANTE", "??????"],
-  shortcut: ["SONS METALICOS", "PERIGO ALTO", "??????"],
+  rare: ["EVENTO ESTRANHO", "LUZ DISTANTE", "CHEIRO DE FERRO", "??????"],
+  shortcut: ["SONS METALICOS", "PERIGO ALTO", "SILENCIO ABSOLUTO"],
 };
 
 const RED_HERRINGS: Hint[] = [
@@ -92,6 +92,22 @@ const RED_HERRINGS: Hint[] = [
   "CHEIRO DE FERRO",
 ];
 
+function isContradictory(existing: Hint[], next: Hint): boolean {
+  if (existing.includes("SILENCIO ABSOLUTO") && next === "MURMURIOS") return true;
+  if (existing.includes("MURMURIOS") && next === "SILENCIO ABSOLUTO") return true;
+  if (existing.includes("MURMURIOS") && next === "SALA SEGURA") return true;
+  if (existing.includes("SALA SEGURA") && next === "MURMURIOS") return true;
+  if (existing.includes("SILENCIO ABSOLUTO") && next === "LUZ DISTANTE") return false;
+  if (existing.includes("SILENCIO ABSOLUTO") && next === "PERIGO ALTO") return false;
+  return false;
+}
+
+function pickHint(rng: () => number, pool: Hint[], exclude: Hint[]): Hint {
+  const candidates = pool.filter((hint) => !exclude.includes(hint));
+  if (candidates.length === 0) return pool[0];
+  return pick(rng, candidates);
+}
+
 function generateHints(rng: () => number, kind: RoomKind, clarity: number, falseHints: number): Hint[] {
   const truthful = HINT_BANK_BY_KIND[kind];
   const hints: Hint[] = [];
@@ -100,10 +116,11 @@ function generateHints(rng: () => number, kind: RoomKind, clarity: number, false
   const truthChance = Math.min(0.95, 0.45 + clarity * 0.18 - falseHints * 0.12);
 
   for (let i = 0; i < count; i++) {
-    if (chance(rng, truthChance)) {
-      hints.push(pick(rng, truthful));
-    } else {
-      hints.push(pick(rng, RED_HERRINGS));
+    const candidate = chance(rng, truthChance)
+      ? pickHint(rng, truthful, hints)
+      : pickHint(rng, RED_HERRINGS, hints);
+    if (!isContradictory(hints, candidate)) {
+      hints.push(candidate);
     }
   }
   return Array.from(new Set(hints));

@@ -38,7 +38,7 @@ export type Rarity = "Comum" | "Raro" | "Épico" | "Divino";
 export type EquipSlot = "boots" | "chest" | "helmet" | "weapon";
 export type ArmorTier = "couro" | "ouro" | "adamantium" | "encantada";
 
-export type ActiveKind = "olho_vidro" | "totem_tempo" | "pocao_vida" | "pocao_sanidade" | "bomba_fumaca";
+export type ActiveKind = "olho_vidro" | "totem_tempo" | "pocao_vida" | "pocao_sanidade" | "bomba_fumaca" | "lanterna";
 
 export interface ItemEffect {
   hintClarity?: number;
@@ -77,6 +77,7 @@ export interface Item {
   slot?: EquipSlot;
   armorTier?: ArmorTier;
   active?: ActiveKind;
+  charges?: number;
   curse?: boolean;
   acquiredAtDoor: number;
   equipped?: boolean;
@@ -104,6 +105,7 @@ export interface CombatState {
   rewardItemChance: number;
   isBoss: boolean;
   turn: number;
+  enemyImage?: string;
 }
 
 export interface RunState {

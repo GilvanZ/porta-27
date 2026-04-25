@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @theme inline {
   --font-pixel: "Press Start 2P", "VT323", ui-monospace, monospace;
@@ -45,10 +47,6 @@ button {
 
 * {
   box-sizing: border-box;
-}
-
-button {
-  font-family: var(--font-pixel);
 }
 
 @keyframes flicker {

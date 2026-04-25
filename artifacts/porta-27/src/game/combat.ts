@@ -17,6 +17,10 @@ export function makeEnemyCombat(
   const baseHp = isBoss ? 12 + tier * 3 : 4 + tier * 2;
   const dmg = (isBoss ? 4 : 2) + tier + Math.round((1 + eff.enemyDmgMod) * 0);
   const finalDmg = Math.max(1, Math.round((isBoss ? 3 + tier : 1 + Math.floor(tier / 2)) * (1 + eff.enemyDmgMod)));
+  const rewardGold = Math.max(1, Math.floor(baseHp * (isBoss ? 1.3 : 0.85))) + Math.floor(eff.lootMod * (isBoss ? 6 : 2));
+  const rewardItemChance = Math.min(0.95, 0.12 + baseHp * 0.06 + (isBoss ? 0.25 : 0));
+  const enemyImage = enemyName === "Coisa Magra" ? "/media/monsters/coisa_magra.gif" : undefined;
+
   return {
     enemyName,
     enemyHp: baseHp,
@@ -24,10 +28,11 @@ export function makeEnemyCombat(
     enemyDmg: Math.max(1, dmg + finalDmg - dmg),
     defending: false,
     log: [`${enemyName} bloqueia o caminho.`],
-    rewardGold: (isBoss ? intBetween(rng, 8, 14) : intBetween(rng, 1, 3)) + Math.floor(eff.lootMod * (isBoss ? 6 : 2)),
-    rewardItemChance: isBoss ? 0.7 : 0.18,
+    rewardGold,
+    rewardItemChance,
     isBoss,
     turn: 1,
+    enemyImage,
   };
 }
 
