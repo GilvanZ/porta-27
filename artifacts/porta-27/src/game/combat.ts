@@ -19,7 +19,7 @@ export function makeEnemyCombat(
   const finalDmg = Math.max(1, Math.round((isBoss ? 3 + tier : 1 + Math.floor(tier / 2)) * (1 + eff.enemyDmgMod)));
   const rewardGold = Math.max(1, Math.floor(baseHp * (isBoss ? 1.3 : 0.85))) + Math.floor(eff.lootMod * (isBoss ? 6 : 2));
   const rewardItemChance = Math.min(0.95, 0.12 + baseHp * 0.06 + (isBoss ? 0.25 : 0));
-  const enemyImage = enemyName === "Coisa Magra" ? "/media/monsters/coisa_magra.gif" : undefined;
+  const enemyImage = enemyName === "Coisa Magra" ? "/media/monsters/coisa_magra.gif" : enemyName === "Cao Sem Pelo" ? "/media/monsters/cao_sem_pelo.gif" : undefined;
 
   return {
     enemyName,
