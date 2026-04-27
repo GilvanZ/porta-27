@@ -100,7 +100,7 @@ function DoorCard({
         className={`relative ${isHovered ? "glow-pulse" : ""}`}
         style={{ color: isHovered ? "#f5b25c" : "#6c6657" }}
       >
-        <DoorArt number={door.doorNumber} highlight={isHovered} shortcut={isShortcut} />
+        <DoorArt spriteType={door.spriteType} highlight={isHovered} shortcut={isShortcut} />
       </div>
 
       <div className={`mt-2 text-xl-mobile text-lg-desktop ${isHovered ? "text-ember-bright text-shadow-ember" : "text-ink"} font-bold text-center`}>
@@ -168,73 +168,52 @@ function hintColor(h: string) {
   }
 }
 
-function DoorArt({ number, highlight, shortcut }: { number: number; highlight: boolean; shortcut: boolean }) {
-  // Procedural variant by number
-  const variant = number % 4;
-  const handleSide = number % 2 === 0 ? "right" : "left";
+function DoorArt({ spriteType, highlight, shortcut }: { spriteType: 0 | 1 | 2; highlight: boolean; shortcut: boolean }) {
+  const spriteUrl = `/door${spriteType}.png`;
+  
   return (
-    <svg viewBox="0 0 60 80" className="w-[80px] h-[110px] sm:w-[120px] sm:h-[160px]" style={{ imageRendering: "pixelated" }}>
-      {/* Frame */}
-      <rect x="2" y="2" width="56" height="76" fill="#0d1018" stroke={highlight ? "#f5b25c" : "#3a3528"} strokeWidth="1" />
-      <rect x="6" y="6" width="48" height="68" fill={shortcut ? "#1a0f08" : "#1a1308"} stroke={highlight ? "#d97a2a" : "#2a2418"} strokeWidth="1" />
-
-      {/* Wood planks */}
-      <line x1="20" y1="6" x2="20" y2="74" stroke="#0a0805" strokeWidth="1" />
-      <line x1="40" y1="6" x2="40" y2="74" stroke="#0a0805" strokeWidth="1" />
-
-      {/* Variant decoration */}
-      {variant === 0 && (
-        <>
-          <rect x="12" y="14" width="36" height="2" fill="#0a0805" />
-          <rect x="12" y="64" width="36" height="2" fill="#0a0805" />
-        </>
-      )}
-      {variant === 1 && (
-        <>
-          <rect x="12" y="20" width="36" height="20" fill="#0a0805" opacity="0.4" />
-          <rect x="14" y="22" width="32" height="16" fill="none" stroke="#3a2a18" />
-        </>
-      )}
-      {variant === 2 && (
-        <>
-          <circle cx="30" cy="24" r="6" fill="#0a0805" opacity="0.5" />
-          <circle cx="30" cy="24" r="3" fill={highlight ? "#f5b25c" : "#3a2a18"} />
-        </>
-      )}
-      {variant === 3 && (
-        <>
-          <polygon points="30,14 46,30 30,46 14,30" fill="none" stroke="#3a2a18" />
-        </>
-      )}
-
-      {/* Number plate */}
-      <rect x="20" y="48" width="20" height="10" fill="#2a1a08" stroke={highlight ? "#f5b25c" : "#3a2a18"} />
-      <text x="30" y="55" fontSize="6" fill={highlight ? "#f5b25c" : "#8a7a4a"} textAnchor="middle" fontFamily="monospace">
-        {String(number).padStart(2, "0")}
-      </text>
-
-      {/* Handle */}
-      <circle
-        cx={handleSide === "right" ? 50 : 10}
-        cy="42"
-        r="1.5"
-        fill={highlight ? "#f5b25c" : "#8a7a4a"}
-      />
-
-      {/* Light leak from under */}
+    <div
+      className="w-[80px] h-[110px] sm:w-[120px] sm:h-[160px] relative overflow-hidden"
+      style={{
+        backgroundImage: `url('${spriteUrl}')`,
+        backgroundSize: "100% 400%",
+        backgroundPosition: "0 0",
+        backgroundRepeat: "no-repeat",
+        imageRendering: "pixelated",
+        border: highlight ? "2px solid #f5b25c" : "2px solid #3a3528",
+        animation: "doorFrames 0.8s steps(4, start) infinite",
+      }}
+    >
+      {/* Glow effect */}
       {highlight && (
-        <rect x="6" y="73" width="48" height="2" fill="#f5b25c" opacity="0.6">
-          <animate attributeName="opacity" values="0.3;0.7;0.3" dur="1.6s" repeatCount="indefinite" />
-        </rect>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            boxShadow: "inset 0 0 8px rgba(245, 178, 92, 0.3), 0 0 12px rgba(245, 178, 92, 0.4)",
+            pointerEvents: "none",
+          }}
+        />
       )}
-
-      {/* Shortcut arrows */}
+      
+      {/* Shortcut indicator */}
       {shortcut && (
-        <g fill={highlight ? "#f5b25c" : "#d97a2a"}>
-          <polygon points="14,38 22,38 22,34 30,42 22,50 22,46 14,46" opacity="0.7" />
-          <polygon points="32,38 40,38 40,34 48,42 40,50 40,46 32,46" opacity="0.7" />
-        </g>
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            fontSize: "20px",
+            color: highlight ? "#f5b25c" : "#d97a2a",
+            fontWeight: "bold",
+            textShadow: "0 0 4px rgba(0,0,0,0.8)",
+            pointerEvents: "none",
+          }}
+        >
+          ➔
+        </div>
       )}
-    </svg>
+    </div>
   );
 }

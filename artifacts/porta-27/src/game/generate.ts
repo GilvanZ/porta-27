@@ -190,6 +190,7 @@ export function generateDoors(
       trueKind: kind,
       skipAmount,
       shortcutCost,
+      spriteType: Math.floor(rng() * 3) as 0 | 1 | 2,
     });
   }
   if (eff.visionBonus && doors.length > 0) {
