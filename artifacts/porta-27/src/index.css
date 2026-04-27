@@ -4,18 +4,18 @@
 
 @theme inline {
   --font-pixel: "Press Start 2P", "VT323", ui-monospace, monospace;
-  --color-bg: #07080c;
-  --color-bg-soft: #0d1018;
-  --color-fog: #1a1d28;
-  --color-ink: #c9c4b0;
-  --color-ink-dim: #6c6657;
-  --color-ember: #d97a2a;
-  --color-ember-bright: #f5b25c;
-  --color-blood: #8b1a1a;
-  --color-mind: #5b8cb5;
-  --color-mind-bright: #9bd1ff;
-  --color-rare: #b87fc9;
-  --color-gold: #e6c34a;
+  --color-bg: #0a0b0f;
+  --color-bg-soft: #1a1d28;
+  --color-fog: #2a2d38;
+  --color-ink: #f0ede0;
+  --color-ink-dim: #b8b5a0;
+  --color-ember: #ff8c42;
+  --color-ember-bright: #ffd700;
+  --color-blood: #ff4444;
+  --color-mind: #4a9eff;
+  --color-mind-bright: #87ceff;
+  --color-rare: #d4a0ff;
+  --color-gold: #ffeb3b;
 }
 
 :root {
@@ -24,14 +24,16 @@
 
 html, body, #root {
   min-height: 100%;
-  background: #07080c;
-  color: #c9c4b0;
+  background: #0a0b0f;
+  color: #f0ede0;
   font-family: var(--font-pixel);
   -webkit-font-smoothing: none;
   font-smooth: never;
   image-rendering: pixelated;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
+  font-size: 16px;
+  line-height: 1.4;
 }
 
 @media (min-width: 768px) {
@@ -141,6 +143,13 @@ button {
 .drift { animation: drift 14s ease-in-out infinite; }
 .glow-pulse { animation: glow-pulse 2.4s ease-in-out infinite; }
 
+.crt {
+  background-image: linear-gradient(rgba(10, 11, 15, 0.82), rgba(10, 11, 15, 0.82)), url("/corredor.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .crt::before {
   content: "";
   position: fixed;
@@ -181,11 +190,47 @@ button {
 }
 
 .text-shadow-ember {
-  text-shadow: 0 0 8px rgba(217, 122, 42, 0.5), 0 1px 0 #000;
+  text-shadow: 0 0 12px rgba(255, 140, 66, 0.8), 0 2px 4px rgba(0, 0, 0, 0.8), 0 1px 0 #000;
 }
 
 .text-shadow-hard {
-  text-shadow: 1px 1px 0 #000, 2px 2px 0 #000;
+  text-shadow: 2px 2px 0 #000, 4px 4px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive text sizes for better readability */
+@media (max-width: 640px) {
+  .text-xs-mobile { font-size: 14px; line-height: 1.5; }
+  .text-sm-mobile { font-size: 16px; line-height: 1.5; }
+  .text-base-mobile { font-size: 18px; line-height: 1.5; }
+  .text-lg-mobile { font-size: 20px; line-height: 1.4; }
+  .text-xl-mobile { font-size: 24px; line-height: 1.4; }
+  .text-2xl-mobile { font-size: 28px; line-height: 1.3; }
+  .text-3xl-mobile { font-size: 32px; line-height: 1.3; }
+  .text-4xl-mobile { font-size: 40px; line-height: 1.2; }
+}
+
+@media (min-width: 641px) {
+  .text-xs-desktop { font-size: 12px; line-height: 1.5; }
+  .text-sm-desktop { font-size: 14px; line-height: 1.5; }
+  .text-base-desktop { font-size: 16px; line-height: 1.5; }
+  .text-lg-desktop { font-size: 18px; line-height: 1.4; }
+  .text-xl-desktop { font-size: 22px; line-height: 1.4; }
+  .text-2xl-desktop { font-size: 26px; line-height: 1.3; }
+  .text-3xl-desktop { font-size: 32px; line-height: 1.3; }
+  .text-4xl-desktop { font-size: 40px; line-height: 1.2; }
+}
+
+/* High contrast mode for better accessibility */
+@media (prefers-contrast: high) {
+  :root {
+    --color-bg: #000000;
+    --color-bg-soft: #111111;
+    --color-fog: #222222;
+    --color-ink: #ffffff;
+    --color-ink-dim: #cccccc;
+    --color-ember: #ffaa00;
+    --color-ember-bright: #ffff00;
+  }
 }
 
 .scanline-fast {

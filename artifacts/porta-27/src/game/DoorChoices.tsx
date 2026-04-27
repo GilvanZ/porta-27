@@ -25,12 +25,12 @@ export function DoorChoices({
   }, [doors]);
 
   return (
-    <div className="h-full flex flex-col items-center justify-center">
-      <div className="text-[10px] text-ink-dim mb-4 flicker tracking-[0.3em]">
-        {visionActive ? <span className="text-rare">◎ OLHO DE VIDRO REVELANDO ◎</span> : "TRES PORTAS NO CORREDOR"}
+    <div className="h-full flex flex-col items-center justify-start px-4 py-2">
+      <div className="text-sm-mobile text-sm-desktop text-ink-dim mb-3 flicker tracking-[0.25em] font-bold">
+        {visionActive ? <span className="text-rare">◎ OLHO DE VIDRO REVELANDO ◎</span> : "TRÊS PORTAS NO CORREDOR"}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-[900px]">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full max-w-[1000px]">
         {doors.map((d, i) => (
           <DoorCard
             key={d.id}
@@ -91,9 +91,9 @@ function DoorCard({
         opacity: revealed ? 1 : 0,
         transform: revealed ? "translateY(0)" : "translateY(12px)",
       }}
-      className={`group relative flex flex-col items-center bg-bg-soft border-2 ${
-        isHovered ? "border-ember" : "border-ink-dim/50"
-      } px-3 py-4 sm:px-4 sm:py-6 transition-all duration-300 hover:bg-fog active:bg-fog active:border-ember min-h-[140px]`}
+      className={`group relative flex min-h-[130px] flex-col justify-between items-center bg-bg-soft ${
+        isHovered ? "" : ""
+      } px-2 py-2 sm:px-3 sm:py-4 transition-all duration-300 hover:bg-fog active:bg-fog active:border-ember`}
     >
       {/* Door pixel art */}
       <div
@@ -103,32 +103,31 @@ function DoorCard({
         <DoorArt number={door.doorNumber} highlight={isHovered} shortcut={isShortcut} />
       </div>
 
-      <div className={`mt-3 text-[24px] ${isHovered ? "text-ember-bright text-shadow-ember" : "text-ink"}`}>
+      <div className={`mt-2 text-xl-mobile text-lg-desktop ${isHovered ? "text-ember-bright text-shadow-ember" : "text-ink"} font-bold text-center`}>
         {String(door.doorNumber).padStart(3, "0")}
       </div>
 
       {isShortcut && (
-        <div className="text-[8px] text-ember mt-1">
+        <div className="text-[10px] sm:text-xs text-ember mt-1 font-bold text-center">
           ► PULA {door.skipAmount} PORTAS
           {door.shortcutCost ? ` (-${door.shortcutCost} VIDA)` : ""}
         </div>
       )}
 
       {showTrue && (
-        <div className="text-[10px] text-rare mt-1 tracking-widest border border-rare/60 px-2 py-[2px] animate-pulse">
+        <div className="absolute top-2 left-1/2 z-20 w-[calc(100%-1rem)] -translate-x-1/2 rounded-full bg-black/80 text-[9px] sm:text-[11px] text-rare tracking-[0.35em] px-2 py-1 animate-pulse font-bold">
           {trueKindReadable(door.trueKind).toUpperCase()}
         </div>
       )}
 
-      <div className="mt-3 flex flex-col gap-1 items-center min-h-[40px]">
-        {door.hints.map((h, i) => (
+      <div className="mt-2 flex flex-col gap-1 items-center min-h-[36px] w-full">
+        {door.hints.slice(0, 2).map((h, i) => (
           <div
             key={i}
-            className="text-[9px] text-ink-dim tracking-widest border border-ink-dim/30 px-2 py-[2px]"
+            className="w-full text-[10px] sm:text-[11px] tracking-[0.15em] px-2 py-1 text-center font-bold"
             style={{
               color: hintColor(h),
-              borderColor: hintColor(h) + "55",
-              textShadow: `0 0 4px ${hintColor(h)}30`,
+              textShadow: `0 0 6px ${hintColor(h)}40`,
             }}
           >
             {h}
@@ -136,8 +135,8 @@ function DoorCard({
         ))}
       </div>
 
-      <div className="mt-3 text-[8px] text-ink-dim opacity-0 group-hover:opacity-100 transition-opacity">
-        [abrir]
+      <div className="mt-4 text-sm-mobile text-xs-desktop text-ink-dim opacity-0 group-hover:opacity-100 transition-opacity font-bold">
+        [ABRIR]
       </div>
     </button>
   );

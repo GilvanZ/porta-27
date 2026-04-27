@@ -34,6 +34,23 @@ export function Inventory({
   const [hovered, setHovered] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [almanacOpen, setAlmanacOpen] = useState(false);
+  const [almanacSelected, setAlmanacSelected] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const hoveredItem = useMemo(() => {
+    if (!hovered || hovered.startsWith("tpl-")) return null;
+    return items.find((it) => it.uid === hovered) ?? null;
+  }, [hovered, items]);
+
+  const hoveredTemplate = useMemo(() => {
+    if (!hovered || !hovered.startsWith("tpl-")) return null;
+    return ALL_ITEMS_TEMPLATES.find((t) => `tpl-${t.id}` === hovered) ?? null;
+  }, [hovered]);
+
+  const selectedTemplate = useMemo(
+    () => ALL_ITEMS_TEMPLATES.find((t) => t.id === almanacSelected) ?? null,
+    [almanacSelected]
+  );
 
   const ownedIds = useMemo(() => items.map((i) => i.id), [items]);
   const ownedById = useMemo(() => {
@@ -69,73 +86,119 @@ export function Inventory({
   }, [ownedById, chances]);
 
   return (
-    <div className="fixed bottom-2 right-2 z-40 max-w-[260px] sm:max-w-[300px] pointer-events-none">
-      <div className="pointer-events-auto bg-bg/95 border border-ember/40 backdrop-blur-sm shadow-[0_0_18px_rgba(217,122,42,0.18)]">
+    <div className="fixed bottom-4 right-4 z-40 flex flex-col items-end overflow-visible">
+      {!isOpen ? (
         <button
           onClick={() => {
-            setAlmanacOpen((v) => !v);
+            setIsOpen(true);
+            setAlmanacOpen(false);
             setExpanded(null);
+            setAlmanacSelected(null);
           }}
-          className="w-full px-2 py-1 border-b border-ink-dim/40 flex items-center justify-between text-[8px] tracking-[0.3em] text-ember-bright hover:bg-ember/10 transition-colors"
+          className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-ember/60 bg-bg-soft/95 px-4 py-3 text-[12px] font-bold text-ember-bright shadow-[0_0_18px_rgba(255,140,66,0.25)] hover:bg-ember/10 transition"
+          aria-label="Abrir inventário"
         >
-          <span>{almanacOpen ? "ALMANAQUE ▾" : "INVENTARIO ▸"}</span>
-          <span className="text-ink-dim">
-            {almanacOpen
-              ? `${ownedIds.length}/${ALL_ITEMS_TEMPLATES.length}`
-              : items.length}
+          <span>INVENTÁRIO</span>
+          <span className="inline-flex h-6 min-w-[24px] items-center justify-center rounded-full bg-ember text-black text-[11px] font-semibold px-2">
+            {items.length}
           </span>
         </button>
-
-        {visionActive && (
-          <div className="px-2 py-1 text-[8px] text-rare border-b border-rare/30 animate-pulse">
-            ◎ VISAO ATIVA — passe o mouse nas portas
+      ) : (
+        <div className="pointer-events-auto w-[90vw] max-w-[380px] max-h-[80vh] sm:max-h-[60vh] overflow-hidden rounded-2xl border-2 border-ember/60 bg-bg-soft/95 backdrop-blur-sm shadow-[0_0_28px_rgba(255,140,66,0.35)]">
+          <div className="flex items-center justify-between border-b-2 border-ember/50 px-4 py-3">
+            <button
+              onClick={() => {
+                setAlmanacOpen((v) => !v);
+                setExpanded(null);
+                setAlmanacSelected(null);
+              }}
+              className="text-sm-mobile text-xs-desktop tracking-[0.3em] text-ember-bright hover:text-white transition-colors font-bold text-left"
+            >
+              {almanacOpen ? "ALMANAQUE ▾" : "INVENTARIO ▸"}
+            </button>
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                setAlmanacOpen(false);
+                setExpanded(null);
+                setAlmanacSelected(null);
+              }}
+              className="text-red-500 text-lg hover:text-red-700"
+            >
+              ×
+            </button>
           </div>
-        )}
 
-        {almanacOpen ? (
-          <AlmanacList
-            rows={almanacRows}
-            currentDoor={currentDoor}
-            ownedById={ownedById}
-            canActivateVision={canActivateVision}
-            visionActive={visionActive}
-            expanded={expanded}
-            setExpanded={setExpanded}
-            hovered={hovered}
-            setHovered={setHovered}
-          />
-        ) : (
-          <OwnedGrid
-            items={items}
-            currentDoor={currentDoor}
-            canActivateVision={canActivateVision}
-            visionActive={visionActive}
-            expanded={expanded}
-            setExpanded={setExpanded}
-            hovered={hovered}
-            setHovered={setHovered}
-          />
-        )}
+          {visionActive && (
+            <div className="px-4 py-3 text-sm-mobile text-xs-desktop text-rare border-b border-rare/40 animate-pulse font-bold">
+              ◎ VISÃO ATIVA — passe o mouse nas portas
+            </div>
+          )}
 
-        {expanded && (() => {
-          const it = items.find((x) => x.uid === expanded);
-          if (!it) return null;
-          return (
-            <ActionPanel
-              item={it}
-              currentDoor={currentDoor}
-              inCombat={inCombat}
-              canActivateVision={canActivateVision}
-              visionActive={visionActive}
-              onUseItem={onUseItem}
-              onEquip={onEquip}
-              onDiscard={onDiscard}
-              onActivateVision={onActivateVision}
-              onClose={() => setExpanded(null)}
-            />
-          );
-        })()}
-      </div>
+          <div className="max-h-[60vh] sm:max-h-[50vh] overflow-y-auto sm:overflow-visible">
+            {almanacOpen ? (
+              <AlmanacList
+                rows={almanacRows}
+                currentDoor={currentDoor}
+                ownedById={ownedById}
+                canActivateVision={canActivateVision}
+                visionActive={visionActive}
+                expanded={expanded}
+                setExpanded={setExpanded}
+                hovered={hovered}
+                setHovered={setHovered}
+                setSelectedTemplateId={setAlmanacSelected}
+              />
+            ) : (
+              <OwnedGrid
+                items={items}
+                currentDoor={currentDoor}
+                canActivateVision={canActivateVision}
+                visionActive={visionActive}
+                expanded={expanded}
+                setExpanded={setExpanded}
+                hovered={hovered}
+                setHovered={setHovered}
+              />
+            )}
+
+            {expanded && (() => {
+              const it = items.find((x) => x.uid === expanded);
+              if (!it) return null;
+              return (
+                <ActionPanel
+                  item={it}
+                  currentDoor={currentDoor}
+                  inCombat={inCombat}
+                  canActivateVision={canActivateVision}
+                  visionActive={visionActive}
+                  onUseItem={onUseItem}
+                  onEquip={onEquip}
+                  onDiscard={onDiscard}
+                  onActivateVision={onActivateVision}
+                  onClose={() => setExpanded(null)}
+                />
+              );
+            })()}
+          </div>
+        </div>
+      )}
+      {(hoveredItem || hoveredTemplate) && (
+        <FloatingTooltip
+          item={hoveredItem}
+          template={hoveredTemplate}
+          currentDoor={currentDoor}
+        />
+      )}
+      {selectedTemplate && (
+        <AlmanacDetailPanel
+          template={selectedTemplate}
+          ownedById={ownedById}
+          currentDoor={currentDoor}
+          chance={almanacRows.find(r => r.template.id === selectedTemplate.id)?.chance ?? 0}
+          clearSelection={() => setAlmanacSelected(null)}
+        />
+      )}
     </div>
   );
 }
@@ -160,9 +223,9 @@ function OwnedGrid({
   setHovered: (s: string | null) => void;
 }) {
   return (
-    <div className="p-2 grid grid-cols-5 sm:grid-cols-6 gap-1 max-h-[200px] overflow-y-auto">
+    <div className="p-2 grid grid-cols-6 sm:grid-cols-6 gap-1 max-h-[300px] sm:max-h-[200px] overflow-y-auto sm:overflow-visible">
       {items.length === 0 && (
-        <div className="col-span-full text-[9px] text-ink-dim italic text-center py-3">
+        <div className="col-span-full text-xs-mobile sm:text-sm-desktop text-ink-dim italic text-center py-3">
           Maos vazias.
         </div>
       )}
@@ -207,31 +270,6 @@ function OwnedGrid({
               )}
             </button>
 
-            {hovered === it.uid && expanded !== it.uid && (
-              <div className="absolute right-full mr-2 bottom-0 w-[200px] bg-bg border border-ember/60 p-2 text-[9px] text-ink z-50 pointer-events-none shadow-lg">
-                <div className="text-[10px]" style={{ color: rarityColor(it.rarity) }}>
-                  {it.name} <span className="text-[7px]">[{it.rarity}]</span>
-                </div>
-                <div className="text-ink-dim italic mt-1 text-[8px]">{it.desc}</div>
-                <div className="mt-1 text-mind-bright text-[8px]">+ {it.upside}</div>
-                {it.downside && <div className="text-blood text-[8px]">- {it.downside}</div>}
-                <div className="mt-1 text-ink-dim text-[7px]">
-                  Carregado por {dur} porta{dur !== 1 ? "s" : ""}
-                  {locked ? " — falta " + (2 - dur) : ""}
-                </div>
-                {it.slot && (
-                  <div className="text-[7px] text-ember-bright mt-[2px]">
-                    EQUIPAVEL [{it.slot}{it.armorTier ? " — " + it.armorTier : ""}]
-                    {it.equipped ? " — EM USO" : ""}
-                  </div>
-                )}
-                {it.curse && (
-                  <div className="text-[7px] text-blood mt-[2px]">
-                    AMALDICOADO — nao pode ser descartado
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         );
       })}
@@ -256,6 +294,7 @@ function AlmanacList({
   setExpanded,
   hovered,
   setHovered,
+  setSelectedTemplateId,
 }: {
   rows: AlmanacRow[];
   currentDoor: number;
@@ -266,10 +305,11 @@ function AlmanacList({
   setExpanded: (s: string | null) => void;
   hovered: string | null;
   setHovered: (s: string | null) => void;
+  setSelectedTemplateId: (id: string) => void;
 }) {
   return (
-    <div className="max-h-[60vh] overflow-y-auto">
-      <div className="px-2 py-1 text-[7px] tracking-widest text-ink-dim border-b border-ink-dim/30 flex justify-between">
+    <div className="max-h-[60vh] sm:max-h-[50vh] overflow-y-auto sm:overflow-visible">
+      <div className="px-2 py-1 text-xs-mobile sm:text-sm-desktop tracking-[0.2em] text-ink-dim border-b border-ink-dim/30 flex justify-between">
         <span>ITEM</span>
         <span>CHANCE</span>
       </div>
@@ -289,13 +329,8 @@ function AlmanacList({
             onMouseLeave={() => setHovered(null)}
           >
             <button
-              onClick={() => {
-                if (firstOwned) {
-                  setExpanded(expanded === firstOwned.uid ? null : firstOwned.uid);
-                }
-              }}
-              disabled={!firstOwned}
-              className={`w-full px-2 py-[3px] flex items-center gap-2 text-[9px] border-b border-ink-dim/15 transition-colors ${
+              onClick={() => setSelectedTemplateId(t.id)}
+              className={`w-full px-2 py-[4px] flex items-center gap-2 text-xs-mobile sm:text-sm-desktop border-b border-ink-dim/15 transition-colors ${
                 row.owned
                   ? "hover:bg-ember/10"
                   : "cursor-default"
@@ -303,7 +338,7 @@ function AlmanacList({
               style={{ opacity: dimmed ? 0.32 : 1 }}
             >
               <span
-                className="text-[14px] w-4 text-center shrink-0"
+                className="text-[16px] w-4 text-center shrink-0"
                 style={{
                   color,
                   filter: row.owned ? `drop-shadow(0 0 3px ${color}90)` : "none",
@@ -330,8 +365,8 @@ function AlmanacList({
                 )}
               </span>
               <span
-                className="text-[8px] shrink-0 tabular-nums"
-                style={{ color: row.owned ? "#8b9a6f" : "#6b6f7a" }}
+                className="text-[10px] shrink-0 tabular-nums"
+                style={{ color: row.owned ? "#8b9a6f" : "#ffffff" }}
               >
                 {row.owned
                   ? "TEM"
@@ -341,32 +376,104 @@ function AlmanacList({
               </span>
             </button>
 
-            {hovered === hoverKey && (
-              <div className="absolute right-full mr-2 bottom-0 w-[200px] bg-bg border border-ember/60 p-2 text-[9px] text-ink z-50 pointer-events-none shadow-lg">
-                <div className="text-[10px]" style={{ color }}>
-                  {t.name} <span className="text-[7px]">[{t.rarity}]</span>
-                </div>
-                <div className="text-ink-dim italic mt-1 text-[8px]">{t.desc}</div>
-                <div className="mt-1 text-mind-bright text-[8px]">+ {t.upside}</div>
-                {t.downside && <div className="text-blood text-[8px]">- {t.downside}</div>}
-                {t.slot && (
-                  <div className="text-[7px] text-ember-bright mt-[2px]">
-                    EQUIPAVEL [{t.slot}{t.armorTier ? " — " + t.armorTier : ""}]
-                  </div>
-                )}
-                {t.curse && (
-                  <div className="text-[7px] text-blood mt-[2px]">AMALDICOADO</div>
-                )}
-                <div className="mt-1 text-[7px] text-ink-dim border-t border-ink-dim/30 pt-1">
-                  {row.owned
-                    ? `Voce possui (${row.ownedCount}). Clique para acoes.`
-                    : `Chance de aparecer agora: ${row.chance.toFixed(2)}%`}
-                </div>
-              </div>
-            )}
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function FloatingTooltip({
+  item,
+  template,
+  currentDoor,
+}: {
+  item: Item | null;
+  template: (typeof ALL_ITEMS_TEMPLATES)[number] | null;
+  currentDoor: number;
+}) {
+  const detail = item ?? template;
+  if (!detail) return null;
+  return (
+    <div className="pointer-events-none absolute top-3 right-full mr-3 w-[300px] max-w-[340px] rounded-2xl bg-bg-soft/95 p-3 text-sm-mobile sm:text-sm-desktop text-ink shadow-[0_24px_70px_rgba(0,0,0,0.45)] z-50">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-lg-mobile font-bold" style={{ color: rarityColor(detail.rarity) }}>
+          {detail.glyph} {detail.name}
+        </span>
+        <span className="text-[10px] uppercase tracking-[0.25em] text-ember-bright">
+          [{detail.rarity}]
+        </span>
+      </div>
+      <div className="mt-2 text-xs-mobile sm:text-sm-desktop leading-5 text-ink-dim italic">
+        {detail.desc}
+      </div>
+      <div className="mt-2 text-sm-mobile text-mind-bright">+ {detail.upside}</div>
+      {detail.downside && <div className="mt-1 text-sm-mobile text-blood">- {detail.downside}</div>}
+      {detail.slot && (
+        <div className="mt-2 text-xs-mobile sm:text-sm-desktop text-ember-bright">
+          EQUIPAVEL [{detail.slot}{detail.armorTier ? ` — ${detail.armorTier}` : ``}]
+          {item?.equipped ? " — EM USO" : ""}
+        </div>
+      )}
+      {detail.curse && (
+        <div className="mt-2 text-xs-mobile text-blood">AMALDICOADO — nao pode ser descartado</div>
+      )}
+      {item && (
+        <div className="mt-2 text-[11px] text-ink-dim border-t border-ink-dim/20 pt-2">
+          Carregado por {currentDoor - item.acquiredAtDoor} porta{currentDoor - item.acquiredAtDoor !== 1 ? "s" : ""}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AlmanacDetailPanel({
+  template,
+  ownedById,
+  currentDoor,
+  chance,
+  clearSelection,
+}: {
+  template: (typeof ALL_ITEMS_TEMPLATES)[number];
+  ownedById: Map<string, Item[]>;
+  currentDoor: number;
+  chance: number;
+  clearSelection: () => void;
+}) {
+  const ownedItems = ownedById.get(template.id) ?? [];
+  const ownedCount = ownedItems.length;
+  const equipped = ownedItems.some((item) => item.equipped);
+  return (
+    <div className="pointer-events-none absolute top-3 left-0 w-[300px] max-w-[340px] rounded-2xl bg-bg-soft/95 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] text-sm-mobile sm:text-sm-desktop text-ink z-50">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-lg-mobile font-bold" style={{ color: rarityColor(template.rarity) }}>
+          {template.glyph} {template.name}
+        </span>
+        <button
+          onClick={clearSelection}
+          className="pointer-events-auto text-red-500 text-lg hover:text-red-700"
+        >
+          ×
+        </button>
+      </div>
+      <div className="mt-3 text-sm-mobile text-ink leading-5 italic bg-black/90 p-2 rounded">
+        {template.desc}
+      </div>
+      <div className="mt-3 text-sm-mobile text-mind-bright">+ {template.upside}</div>
+      {template.downside && <div className="mt-1 text-sm-mobile text-blood">- {template.downside}</div>}
+      {template.slot && (
+        <div className="mt-2 text-xs-mobile sm:text-sm-desktop text-ember-bright">
+          EQUIPAVEL [{template.slot}{template.armorTier ? ` — ${template.armorTier}` : ``}]
+        </div>
+      )}
+      {template.curse && (
+        <div className="mt-2 text-xs-mobile text-blood">AMALDICOADO — este item nao pode ser descartado</div>
+      )}
+      <div className="mt-3 text-xs-mobile text-ink-dim border-t border-ink-dim/20 pt-2">
+        {ownedCount > 0
+          ? `Voce possui ${ownedCount} copia(s). ${equipped ? "Alguma esta equipada." : "Clique no item no inventario para usar ou equipar."}`
+          : `Chance de aparecer agora: ${chance.toFixed(2)}%`}
+      </div>
     </div>
   );
 }
@@ -399,7 +506,7 @@ function ActionPanel({
   const isVisionItem = it.active === "olho_vidro";
   const isConsumable = !!it.active && !isVisionItem && it.active !== "totem_tempo";
   return (
-    <div className="border-t border-ember/40 p-2 text-[9px] text-ink">
+    <div className="border-t border-ember/40 p-2 text-xs-mobile sm:text-sm-desktop text-ink">
       <div className="flex items-start gap-2">
         <span
           style={{

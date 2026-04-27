@@ -75,7 +75,7 @@ export function CombatScreen({
     setDisplayPlayerHp(hp);
     setActionLabel(null);
     setDamageLabel(null);
-  }, [combat.enemyName, combat.enemyMaxHp, combat.enemyHp, hp, resolved]);
+  }, [combat.enemyName, combat.enemyMaxHp, resolved]);
 
   useEffect(() => {
     if (combatPhase === "idle") {
@@ -140,12 +140,12 @@ export function CombatScreen({
       setActionLabel(`${combat.enemyName.toUpperCase()} ataca...`);
       setCombatPhase("playerDamageDelay");
       timerRef.current = window.setTimeout(() => {
-        setDamageLabel(`-${took}`);
+        setDamageLabel(took > 0 ? `-${took}` : null);
         setCombatPhase("playerDamageAnim");
         animateHpChange(displayPlayerHp, Math.max(0, hp - took), setDisplayPlayerHp, () => {
           onAction({
             type: "playerAttack",
-            playerHpDelta: -took,
+            playerHpDelta: took > 0 ? -took : 0,
             message,
           });
           setDamageLabel(null);
@@ -159,7 +159,8 @@ export function CombatScreen({
   const schedulePlayerAction = (
     action: CombatAction,
     enemyDamage?: number,
-    shouldScheduleEnemyAttack = true
+    shouldScheduleEnemyAttack = true,
+    enemyAttackMessage?: string
   ) => {
     setCombatPhase("playerDelay");
     setActionLabel("Voce age...");
@@ -171,11 +172,15 @@ export function CombatScreen({
 
       if (enemyAlive && shouldScheduleEnemyAttack && !willEndCombat) {
         const newEnemyHp = Math.max(0, combat.enemyHp + (action.enemyHpDelta ?? 0));
-        setCombatPhase("idle");
+        
         animateHpChange(displayEnemyHp, newEnemyHp, setDisplayEnemyHp, () => {
           setDamageLabel(null);
           setActionLabel(null);
-          scheduleEnemyAttack(2000, enemyDamage ?? 0, `${combat.enemyName} contra-ataca (-${enemyDamage ?? 0} vida).`);
+          scheduleEnemyAttack(
+            2000,
+            enemyDamage ?? 0,
+            enemyAttackMessage ?? `${combat.enemyName} contra-ataca (-${enemyDamage ?? 0} vida).`
+          );
         });
       } else {
         setDamageLabel(null);
@@ -204,15 +209,26 @@ export function CombatScreen({
   const doDefend = () => {
     if (busy || resolved) return;
     const raw = combat.enemyDmg + intBetween(Math.random, 0, 1);
-    const took = applyArmor(raw, eff, true);
+    const blocked = Math.random() < 0.5;
+    const took = blocked ? 0 : applyArmor(raw, eff, true);
+    
+    // Chance de contra-ataque (30%)
+    const counterAttack = Math.random() < 0.3;
+    const counterDmg = counterAttack ? Math.max(1, Math.floor(playerAtk * 0.7)) : 0;
+    
     schedulePlayerAction(
       {
         type: "playerDefend",
-        playerHpDelta: -took,
-        message: took > 0 ? `Voce se protege. (-${took} vida)` : `Voce bloqueia o golpe.`,
+        message: counterAttack 
+          ? `Voce se defende e contra-ataca! (+${counterDmg} dano)`
+          : "Voce se prepara para defender.",
+        enemyHpDelta: counterAttack ? -counterDmg : undefined,
       },
       took,
-      true
+      true,
+      took > 0
+        ? `${combat.enemyName} contra-ataca (-${took} vida).`
+        : `${combat.enemyName} ataca e voce bloqueia o golpe.`
     );
   };
 
@@ -273,11 +289,11 @@ export function CombatScreen({
   };
 
   return (
-    <div className="relative min-h-full flex flex-col items-center justify-start py-2 px-2 overflow-hidden">
-      <div className={`relative z-10 text-[12px] sm:text-[14px] tracking-[0.3em] text-blood text-shadow-hard text-center`}>
+    <div className="relative min-h-full flex flex-col items-center justify-start py-4 px-4 overflow-hidden">
+      <div className={`relative z-10 text-lg-mobile text-base-desktop tracking-[0.3em] text-blood text-shadow-hard text-center font-bold`}>
         {combat.isBoss ? "CHEFE — " : "COMBATE — "}{combat.enemyName.toUpperCase()}
       </div>
-      <div className="text-[9px] text-ink-dim mt-1 italic">Turno {combat.turn}</div>
+      <div className="text-sm-mobile text-xs-desktop text-ink-dim mt-2 italic font-bold">TURNO {combat.turn}</div>
 
       {combat.enemyImage && (
         <div className="mt-4 w-full max-w-[260px] sm:max-w-[320px]">
@@ -327,10 +343,10 @@ export function CombatScreen({
       </div>
 
       {resolved ? (
-        <div className="relative z-10 mt-4 flex flex-col items-center gap-3 w-full">
+        <div className="relative z-10 mt-6 flex flex-col items-center gap-4 w-full">
           <button
             onClick={onContinue}
-            className="text-[11px] px-6 py-3 border-2 border-ember text-ember-bright hover:bg-ember hover:text-bg transition-colors min-h-[44px]"
+            className="text-lg-mobile text-base-desktop px-8 py-4 border-3 border-ember text-ember-bright hover:bg-ember hover:text-bg transition-all duration-200 min-h-[52px] font-bold rounded-lg"
           >
             CONTINUAR ►
           </button>
@@ -372,31 +388,31 @@ export function CombatScreen({
           </button>
         </div>
       ) : (
-        <div className="relative z-10 mt-4 grid grid-cols-2 gap-2 w-full max-w-[420px]">
+        <div className="relative z-10 mt-6 grid grid-cols-2 gap-3 w-full max-w-[480px]">
           <button
             onClick={doAttack}
-            className="text-[10px] px-3 py-3 border border-blood hover:bg-blood/20 text-blood hover:text-ember-bright transition-colors min-h-[44px]"
+            className="text-sm-mobile text-xs-desktop px-4 py-4 border-2 border-blood hover:bg-blood/20 text-blood hover:text-ember-bright transition-colors min-h-[56px] font-bold rounded"
           >
-            ⚔ ATACAR <span className="text-[8px] text-ink-dim">({playerAtk})</span>
+            ⚔ ATACAR <span className="text-xs-mobile text-[10px] text-ink-dim block">({playerAtk})</span>
           </button>
           <button
             onClick={doDefend}
-            className="text-[10px] px-3 py-3 border border-mind hover:bg-mind/20 text-mind hover:text-mind-bright transition-colors min-h-[44px]"
+            className="text-sm-mobile text-xs-desktop px-4 py-4 border-2 border-mind hover:bg-mind/20 text-mind hover:text-mind-bright transition-colors min-h-[56px] font-bold rounded"
           >
             ▣ DEFENDER
           </button>
           <button
             onClick={() => setShowItems(true)}
             disabled={usableItems.length === 0}
-            className="text-[10px] px-3 py-3 border border-ember disabled:border-ink-dim disabled:text-ink-dim hover:bg-ember/20 text-ember hover:text-ember-bright transition-colors min-h-[44px]"
+            className="text-sm-mobile text-xs-desktop px-4 py-4 border-2 border-ember disabled:border-ink-dim disabled:text-ink-dim hover:bg-ember/20 text-ember hover:text-ember-bright transition-colors min-h-[56px] font-bold rounded"
           >
-            ◎ USAR ITEM <span className="text-[8px]">({usableItems.length})</span>
+            ◎ USAR ITEM <span className="text-xs-mobile text-[10px] block">({usableItems.length})</span>
           </button>
           <button
             onClick={doFlee}
-            className="text-[10px] px-3 py-3 border border-ink-dim hover:border-ember-bright text-ink hover:text-ember-bright transition-colors min-h-[44px]"
+            className="text-sm-mobile text-xs-desktop px-4 py-4 border-2 border-ink-dim hover:border-ember-bright text-ink hover:text-ember-bright transition-colors min-h-[56px] font-bold rounded"
           >
-            → FUGIR <span className="text-[8px] text-ink-dim">({Math.round(flee * 100)}%)</span>
+            → FUGIR <span className="text-xs-mobile text-[10px] text-ink-dim block">({Math.round(flee * 100)}%)</span>
           </button>
         </div>
       )}

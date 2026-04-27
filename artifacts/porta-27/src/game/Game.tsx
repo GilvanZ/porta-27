@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import type { CombatState, Door, Item, RunState } from "./types";
 import { aggregateEffects, generateDoors, generateMapPreview } from "./generate";
 import { buildRoom, type RoomData } from "./rooms";
-import { sfx, startAmbient, setMuted } from "./audio";
+import { sfx, startAmbient } from "./audio";
 import { makeRng } from "./rng";
 import { Title } from "./Title";
 import { HUD } from "./HUD";
@@ -109,6 +109,12 @@ function recomputeMaxes(state: RunState, items: Item[]): { maxHp: number; maxSan
   };
 }
 
+function buildDoorSet(seed: number, doorNumber: number, items: Item[]): Door[] {
+  const eff = aggregateEffects(items);
+  const rng = makeRng((seed ^ (doorNumber * 2654435761)) >>> 0);
+  return generateDoors(rng, doorNumber, items, eff);
+}
+
 function reducer(state: RunState, action: Action): RunState {
   switch (action.type) {
     case "start": {
@@ -131,6 +137,7 @@ function reducer(state: RunState, action: Action): RunState {
         sanity: maxHp,
         maxSanity: maxHp,
         phase: "doors",
+        doors: buildDoorSet(state.seed, 0, items),
         log: [...state.log, `Voce escolhe ${action.item.name}.`].slice(-30),
       };
     }
@@ -263,6 +270,7 @@ function reducer(state: RunState, action: Action): RunState {
         currentRoom: null,
         combat: null,
         phase: "doors",
+        doors: buildDoorSet(state.seed, state.doorNumber, state.items),
         roomResolved: false,
         roomsCleared,
         hp,
@@ -446,6 +454,7 @@ function reducer(state: RunState, action: Action): RunState {
         currentRoom: null,
         combat: null,
         phase: "doors",
+        doors: buildDoorSet(state.seed, state.doorNumber, state.items),
         roomResolved: false,
         roomsCleared,
         hp,
@@ -471,6 +480,7 @@ function reducer(state: RunState, action: Action): RunState {
         maxSanity,
         doorNumber: newDoor,
         phase: "doors",
+        doors: buildDoorSet(state.seed, newDoor, items),
         combat: null,
         currentRoom: null,
         roomResolved: false,
@@ -487,8 +497,6 @@ export function Game() {
     const init = makeInitialRun(Date.now() & 0xffffffff);
     return { ...init, bestRun: meta.bestRun, totalRuns: meta.totalRuns };
   });
-
-  const [muted, setMutedState] = useState(false);
   const meta = useRef<MetaSave>(loadMeta());
 
   const stepRng = useMemo(() => {
@@ -499,8 +507,8 @@ export function Game() {
 
   const doorsForChoice = useMemo<Door[]>(() => {
     if (state.phase !== "doors") return [];
-    return generateDoors(stepRng, state.doorNumber, state.items, eff);
-  }, [state.phase, state.doorNumber, state.items, stepRng, eff]);
+    return state.doors;
+  }, [state.phase, state.doors]);
 
   const mapPreview = useMemo(() => {
     if (!eff.mapBonus) return null;
@@ -638,12 +646,6 @@ export function Game() {
     };
   }, []);
 
-  const toggleMute = () => {
-    const m = !muted;
-    setMuted(m);
-    setMutedState(m);
-  };
-
   const starterChoices = useMemo(() => {
     if (state.phase !== "starter-pick") return [];
     const r = makeRng((state.seed ^ 0x9e3779b1) >>> 0);
@@ -675,7 +677,7 @@ export function Game() {
 
       {inGame && (
         <div className="relative z-10 w-full max-w-[1100px] px-2 sm:px-4 py-3 flex flex-col min-h-screen md:h-full">
-          <HUD state={state} onMute={toggleMute} muted={muted} />
+          <HUD state={state} />
 
           <Corridor doorNumber={state.doorNumber} mapPreview={mapPreview} />
 

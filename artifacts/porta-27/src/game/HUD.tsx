@@ -2,46 +2,36 @@ import type { RunState } from "./types";
 
 export function HUD({
   state,
-  onMute,
-  muted,
 }: {
   state: RunState;
-  onMute: () => void;
-  muted: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-2 text-[10px] text-ink">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+    <div className="flex flex-col gap-3 text-base-mobile text-sm-desktop text-ink px-4 py-3 bg-bg-soft/90 backdrop-blur-sm border border-fog rounded-lg">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
           <Bar
             label="VIDA"
             value={state.hp}
             max={state.maxHp}
-            color="#8b1a1a"
-            glow="#d97a2a"
+            color="#ff4444"
+            glow="#ff8c42"
           />
           <Bar
             label="SANIDADE"
             value={state.sanity}
             max={state.maxSanity}
-            color="#5b8cb5"
-            glow="#9bd1ff"
+            color="#4a9eff"
+            glow="#87ceff"
           />
         </div>
-        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 flex-wrap">
-          <div className="text-ember-bright text-shadow-hard text-[11px]">
+        <div className="flex items-center justify-between lg:justify-end gap-4 lg:gap-6 flex-wrap">
+          <div className="text-ember-bright text-shadow-hard text-lg-mobile text-base-desktop font-bold">
             ◐ {state.gold}
           </div>
-          <div className="text-ink-dim text-[10px]">
-            PORTA <span className="text-ember-bright text-shadow-ember">{state.doorNumber}</span>
+          <div className="text-ink-dim text-base-mobile text-sm-desktop">
+            PORTA <span className="text-ember-bright text-shadow-ember font-bold text-lg-mobile text-base-desktop">{state.doorNumber}</span>
             <span className="text-ink-dim">/100</span>
           </div>
-          <button
-            onClick={onMute}
-            className="px-2 py-2 sm:py-1 border border-ink-dim text-ink-dim active:bg-ember/20 hover:text-ember-bright hover:border-ember transition-colors text-[9px] min-h-[32px]"
-          >
-            {muted ? "[MUDO]" : "[SOM]"}
-          </button>
         </div>
       </div>
     </div>
@@ -62,32 +52,32 @@ function Bar({
   glow: string;
 }) {
   const cells = max;
-  // On mobile, use smaller cells so up to ~14 cells fit in tight space
   return (
-    <div className="flex items-center gap-2">
-      <div className="text-[9px] text-ink-dim w-[52px] sm:w-[60px] shrink-0">{label}</div>
+    <div className="flex items-center gap-3">
+      <div className="text-sm-mobile text-xs-desktop text-ink-dim w-[70px] sm:w-[80px] shrink-0 font-bold">{label}</div>
       <div
-        className="flex gap-[2px] items-center flex-1 sm:flex-none"
-        style={{ filter: `drop-shadow(0 0 4px ${glow}40)` }}
+        className="flex gap-[3px] items-center flex-1 sm:flex-none"
+        style={{ filter: `drop-shadow(0 0 6px ${glow}60)` }}
       >
         {Array.from({ length: cells }).map((_, i) => {
           const filled = i < value;
           return (
             <div
               key={i}
-              className="h-3 sm:h-[14px] flex-1 sm:flex-none"
+              className="h-4 sm:h-5 flex-1 sm:flex-none rounded-sm"
               style={{
-                maxWidth: 12,
-                minWidth: 4,
-                width: 8,
-                background: filled ? color : "#1a1d28",
-                border: `1px solid ${filled ? glow : "#2a2d38"}`,
+                maxWidth: 16,
+                minWidth: 6,
+                width: 12,
+                background: filled ? color : "#2a2d38",
+                border: `2px solid ${filled ? glow : "#404040"}`,
+                boxShadow: filled ? `0 0 8px ${glow}40` : 'none',
               }}
             />
           );
         })}
       </div>
-      <div className="text-[9px] text-ink w-[36px] shrink-0 text-right">
+      <div className="text-sm-mobile text-xs-desktop text-ink w-[50px] shrink-0 text-right font-bold">
         {value}/{max}
       </div>
     </div>

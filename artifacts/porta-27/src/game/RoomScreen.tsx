@@ -38,16 +38,16 @@ export function RoomScreen({
 
   return (
     <div
-      className={`relative min-h-full flex flex-col items-center justify-start py-2 px-2 overflow-hidden ${
+      className={`relative min-h-full flex flex-col items-center justify-start py-6 px-4 overflow-hidden ${
         shake ? "animate-[shake_0.3s]" : ""
       }`}
     >
       <RoomAmbient kind={kind} />
 
-      <div className={`relative z-10 text-[12px] sm:text-[14px] tracking-[0.25em] sm:tracking-[0.3em] text-shadow-hard text-center ${room.accent}`}>
+      <div className={`relative z-10 text-lg-mobile text-base-desktop tracking-[0.25em] sm:tracking-[0.3em] text-shadow-hard text-center font-bold ${room.accent}`}>
         {room.title.toUpperCase()}
       </div>
-      <div className="relative z-10 text-[9px] text-ink-dim mt-1 italic max-w-[600px] text-center px-2">
+      <div className="relative z-10 text-sm-mobile text-xs-desktop text-ink-dim mt-3 italic max-w-[700px] text-center px-4 leading-relaxed">
         {room.flavor}
       </div>
 
