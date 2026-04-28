@@ -246,11 +246,3 @@ button {
   height: 80px;
   animation: scanline 6s linear infinite;
 }
-
-@keyframes doorFrames {
-  0% { background-position: 0 0%; }
-  25% { background-position: 0 33.333%; }
-  50% { background-position: 0 66.666%; }
-  75% { background-position: 0 100%; }
-  100% { background-position: 0 0%; }
-}

@@ -359,7 +359,7 @@ export function CombatScreen({
           <div className="flex gap-1">
             <span className="text-blood animate-pulse">●</span>
             <span className="text-blood animate-pulse" style={{ animationDelay: "0.2s" }}>●</span>
-            <span className="text-blood animate-pulse" style={{ animationDelay: "0.4s" }}>●</span>
+            <span className="text-blood animate-pulse" style={{ animationDelay: "1.8s" }}>●</span>
           </div>
         </div>
       ) : showItems ? (

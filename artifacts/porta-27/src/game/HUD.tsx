@@ -1,4 +1,5 @@
-import type { RunState } from "./types";
+import type { RunState } from "./types"; 
+import { Coin } from "../components/ui/coin";
 
 export function HUD({
   state,
@@ -17,7 +18,7 @@ export function HUD({
             glow="#ff8c42"
           />
           <Bar
-            label="SANIDADE"
+            label="SANIDADE "
             value={state.sanity}
             max={state.maxSanity}
             color="#4a9eff"
@@ -26,7 +27,7 @@ export function HUD({
         </div>
         <div className="flex items-center justify-between lg:justify-end gap-4 lg:gap-6 flex-wrap">
           <div className="text-ember-bright text-shadow-hard text-lg-mobile text-base-desktop font-bold">
-            ◐ {state.gold}
+            <Coin /> {state.gold}
           </div>
           <div className="text-ink-dim text-base-mobile text-sm-desktop">
             PORTA <span className="text-ember-bright text-shadow-ember font-bold text-lg-mobile text-base-desktop">{state.doorNumber}</span>

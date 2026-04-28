@@ -32,7 +32,6 @@ export interface Door {
   trueKind: RoomKind;
   skipAmount: number;
   shortcutCost?: number;
-  spriteType: 0 | 1 | 2;
 }
 
 export type Rarity = "Comum" | "Raro" | "Épico" | "Divino";
