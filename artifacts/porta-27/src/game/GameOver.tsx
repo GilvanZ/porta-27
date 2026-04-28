@@ -8,7 +8,11 @@ export function GameOver({
   cause: string;
   onRetry: () => void;
   bestRun: number;
-}) {
+}) 
+
+    
+
+    {
   return (
     <div className="relative z-10 flex flex-col items-center text-center max-w-[700px] px-6 py-16">
       <div className="text-blood text-sm-mobile text-xs-desktop tracking-[0.4em] mb-4 flicker font-bold">VOCÊ NÃO PASSOU.</div>

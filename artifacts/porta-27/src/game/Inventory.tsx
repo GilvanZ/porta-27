@@ -106,13 +106,13 @@ export function Inventory({
       ) : (
         <div className="pointer-events-auto w-[90vw] max-w-[380px] max-h-[80vh] sm:max-h-[60vh] overflow-hidden rounded-2xl border-2 border-ember/60 bg-bg-soft/95 backdrop-blur-sm shadow-[0_0_28px_rgba(255,140,66,0.35)]">
           <div className="flex items-center justify-between border-b-2 border-ember/50 px-4 py-3">
-            <button
+            <button 
               onClick={() => {
                 setAlmanacOpen((v) => !v);
                 setExpanded(null);
                 setAlmanacSelected(null);
               }}
-              className="text-sm-mobile text-xs-desktop tracking-[0.3em] text-ember-bright hover:text-white transition-colors font-bold text-left"
+              className="text-sm-mobile text-xs-desktop tracking-[0.3em] text-ember-bright hover:text-white transition-colors font-bold text-left "
             >
               {almanacOpen ? "ALMANAQUE ▾" : "INVENTARIO ▸"}
             </button>
@@ -123,19 +123,19 @@ export function Inventory({
                 setExpanded(null);
                 setAlmanacSelected(null);
               }}
-              className="text-red-500 text-lg hover:text-red-700"
+              className="text-red-500 text-lg hover:text-red-70 "
             >
-              ×
+              x
             </button>
           </div>
 
           {visionActive && (
-            <div className="px-4 py-3 text-sm-mobile text-xs-desktop text-rare border-b border-rare/40 animate-pulse font-bold">
+            <div className="px-4 py-3 text-sm-mobile text-xs-desktop text-rare border-b border-rare/40 animate-pulse font-bold ">
               ◎ VISÃO ATIVA — passe o mouse nas portas
             </div>
           )}
 
-          <div className="max-h-[60vh] sm:max-h-[50vh] overflow-y-auto sm:overflow-visible">
+          <div className="max-h-[60vh] sm:max-h-[50vh] overflow-y-auto sm:overflow-visible  ">
             {almanacOpen ? (
               <AlmanacList
                 rows={almanacRows}
@@ -222,6 +222,8 @@ function OwnedGrid({
   hovered: string | null;
   setHovered: (s: string | null) => void;
 }) {
+
+  // Sort items: equipped first, then by rarity (worst→best), then by acquisition time (oldest→newest).
   return (
     <div className="p-2 grid grid-cols-6 sm:grid-cols-6 gap-1 max-h-[300px] sm:max-h-[200px] overflow-y-auto sm:overflow-visible">
       {items.length === 0 && (
@@ -308,8 +310,8 @@ function AlmanacList({
   setSelectedTemplateId: (id: string) => void;
 }) {
   return (
-    <div className="max-h-[60vh] sm:max-h-[50vh] overflow-y-auto sm:overflow-visible">
-      <div className="px-2 py-1 text-xs-mobile sm:text-sm-desktop tracking-[0.2em] text-ink-dim border-b border-ink-dim/30 flex justify-between">
+    <div className="max-h-[60vh] sm:max-h-[50vh] overflow-y-auto sm:overflow-visible ">
+      <div className="px-2 py-1 text-xs-mobile sm:text-sm-desktop tracking-[0.2em] text-ink-dim border-b border-ink-dim/30 flex justify-between ">
         <span>ITEM</span>
         <span>CHANCE</span>
       </div>
@@ -322,12 +324,7 @@ function AlmanacList({
         const color = rarityColor(t.rarity);
         const isOlhoVidro = t.active === "olho_vidro";
         return (
-          <div
-            key={t.id}
-            className="relative"
-            onMouseEnter={() => setHovered(hoverKey)}
-            onMouseLeave={() => setHovered(null)}
-          >
+          <div key={t.id} className="relative" onMouseEnter={() => setHovered(hoverKey)} onMouseLeave={() => setHovered(null)}>
             <button
               onClick={() => setSelectedTemplateId(t.id)}
               className={`w-full px-2 py-[4px] flex items-center gap-2 text-xs-mobile sm:text-sm-desktop border-b border-ink-dim/15 transition-colors ${
@@ -335,7 +332,7 @@ function AlmanacList({
                   ? "hover:bg-ember/10"
                   : "cursor-default"
               }`}
-              style={{ opacity: dimmed ? 0.32 : 1 }}
+              style={{ opacity: dimmed ? 0.35 : 1 }}
             >
               <span
                 className="text-[16px] w-4 text-center shrink-0"
@@ -352,16 +349,16 @@ function AlmanacList({
               >
                 {t.name}
                 {row.ownedCount > 1 && (
-                  <span className="text-[7px] text-ember-bright ml-1">x{row.ownedCount}</span>
+                  <span className="text-[20px] text-ember-bright ml-1">x{row.ownedCount}</span>
                 )}
                 {firstOwned?.equipped && (
-                  <span className="text-[7px] text-ember-bright ml-1">[E]</span>
+                  <span className="text-[20px] text-ember-bright ml-1">[E]</span>
                 )}
                 {t.curse && (
-                  <span className="text-[7px] text-blood ml-1">✝</span>
+                  <span className="text-[20px] text-blood ml-1">✝</span>
                 )}
                 {isOlhoVidro && canActivateVision && !visionActive && (
-                  <span className="text-[7px] text-rare ml-1 animate-pulse">●</span>
+                  <span className="text-[20px] text-rare ml-1 animate-pulse">●</span>
                 )}
               </span>
               <span
@@ -395,7 +392,8 @@ function FloatingTooltip({
   const detail = item ?? template;
   if (!detail) return null;
   return (
-    <div className="pointer-events-none absolute top-3 right-full mr-3 w-[300px] max-w-[340px] rounded-2xl bg-bg-soft/95 p-3 text-sm-mobile sm:text-sm-desktop text-ink shadow-[0_24px_70px_rgba(0,0,0,0.45)] z-50">
+    // The tooltip is rendered in the inventory, which is on the bottom right. So we position it to the top right of the hovered item.
+    <div className="pointer-events-none absolute top-3 right-full mr-3 w-[300px] max-w-[340px] rounded-2xl bg-black/90 p-3 text-sm-mobile sm:text-sm-desktop text-ink shadow-[0_24px_70px_rgba(0,0,0,0.45)] z-50">
       <div className="flex items-center justify-between gap-2">
         <span className="text-lg-mobile font-bold" style={{ color: rarityColor(detail.rarity) }}>
           {detail.glyph} {detail.name}
@@ -444,7 +442,7 @@ function AlmanacDetailPanel({
   const ownedCount = ownedItems.length;
   const equipped = ownedItems.some((item) => item.equipped);
   return (
-    <div className="pointer-events-none absolute top-3 left-0 w-[300px] max-w-[340px] rounded-2xl bg-bg-soft/95 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] text-sm-mobile sm:text-sm-desktop text-ink z-50">
+    <div className="pointer-events-none absolute top-3 left-0 w-[300px] max-w-[340px] rounded-2xl bg-black/90 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] text-sm-mobile sm:text-sm-desktop text-ink z-50">
       <div className="flex items-center justify-between gap-2">
         <span className="text-lg-mobile font-bold" style={{ color: rarityColor(template.rarity) }}>
           {template.glyph} {template.name}
@@ -453,13 +451,13 @@ function AlmanacDetailPanel({
           onClick={clearSelection}
           className="pointer-events-auto text-red-500 text-lg hover:text-red-700"
         >
-          ×
+          x
         </button>
       </div>
       <div className="mt-3 text-sm-mobile text-ink leading-5 italic bg-black/90 p-2 rounded">
         {template.desc}
       </div>
-      <div className="mt-3 text-sm-mobile text-mind-bright">+ {template.upside}</div>
+      <div className="mt-3 text-sm-mobile text-mind-bright bg-black/90">+ {template.upside}</div>
       {template.downside && <div className="mt-1 text-sm-mobile text-blood">- {template.downside}</div>}
       {template.slot && (
         <div className="mt-2 text-xs-mobile sm:text-sm-desktop text-ember-bright">
@@ -517,12 +515,12 @@ function ActionPanel({
         >
           {it.glyph}
         </span>
-        <div className="flex-1">
+        <div className="flex-1 text-[14px] font-bold">
           <div style={{ color: rarityColor(it.rarity) }}>{it.name}</div>
-          <div className="text-ink-dim italic text-[8px]">{it.desc}</div>
-          <div className="mt-[2px] text-mind-bright text-[8px]">+ {it.upside}</div>
-          {it.downside && <div className="text-blood text-[8px]">- {it.downside}</div>}
-          <div className="text-ink-dim text-[7px] mt-1">
+          <div className="text-ink-dim italic text-[14px]">{it.desc}</div>
+          <div className="mt-[2px] text-mind-bright text-[14px]">+ {it.upside}</div>
+          {it.downside && <div className="text-blood text-[14px]">- {it.downside}</div>}
+          <div className="text-ink-dim text-[14px] mt-1">
             {dur} porta{dur !== 1 ? "s" : ""} carregando
           </div>
         </div>
@@ -534,7 +532,7 @@ function ActionPanel({
               onActivateVision();
               onClose();
             }}
-            className="text-[8px] px-2 py-1 border border-rare text-rare hover:bg-rare/20"
+            className="text-[14px] px-2 py-1 border border-rare text-rare hover:bg-rare/20"
           >
             ATIVAR
           </button>
@@ -551,7 +549,7 @@ function ActionPanel({
               }
             }}
             disabled={it.active === "bomba_fumaca" && !inCombat}
-            className="text-[8px] px-2 py-1 border border-ember text-ember hover:bg-ember/20 disabled:border-ink-dim disabled:text-ink-dim"
+            className="text-[14px] px-2 py-1 border border-ember text-ember hover:bg-ember/20 disabled:border-ink-dim disabled:text-ink-dim"
           >
             USAR
           </button>
@@ -562,7 +560,7 @@ function ActionPanel({
               onEquip(it.uid);
               onClose();
             }}
-            className="text-[8px] px-2 py-1 border border-ember-bright text-ember-bright hover:bg-ember/20"
+            className="text-[14px] px-2 py-1 border border-ember-bright text-ember-bright hover:bg-ember/20"
           >
             EQUIPAR
           </button>
@@ -573,7 +571,7 @@ function ActionPanel({
               onEquip(it.uid);
               onClose();
             }}
-            className="text-[8px] px-2 py-1 border border-ink-dim text-ink hover:bg-ink/20"
+            className="text-[14px] px-2 py-1 border border-ink-dim text-ink hover:bg-ink/20"
           >
             DESEQUIPAR
           </button>
@@ -586,7 +584,7 @@ function ActionPanel({
             }
           }}
           disabled={!canDiscard(it, currentDoor)}
-          className="text-[8px] px-2 py-1 border border-blood text-blood hover:bg-blood/20 disabled:border-ink-dim disabled:text-ink-dim"
+          className="text-[14px] px-2 py-1 border border-blood text-blood hover:bg-blood/20 disabled:border-ink-dim disabled:text-ink-dim"
         >
           {it.curse ? "AMALDICOADO" : locked ? `BLOQ (${2 - dur})` : "DESCARTAR"}
         </button>

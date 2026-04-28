@@ -5,7 +5,7 @@
 @theme inline {
   --font-pixel: "Press Start 2P", "VT323", ui-monospace, monospace;
   --color-bg: #0a0b0f;
-  --color-bg-soft: #1a1d28;
+  --color-bg-soft: #0f0f0f;
   --color-fog: #2a2d38;
   --color-ink: #f0ede0;
   --color-ink-dim: #b8b5a0;

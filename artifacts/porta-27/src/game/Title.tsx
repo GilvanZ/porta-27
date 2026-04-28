@@ -29,26 +29,18 @@ export function Title({
 
       <div className="text-ink-dim text-base-mobile text-sm-desktop leading-relaxed mb-12 max-w-[600px] px-4">
         Você não deveria estar aqui.<br />
-        Cada porta esconde algo. Talvez tesouro. Talvez não.<br />
         Chegue até a Porta 100. Se conseguir.
       </div>
 
       <button
         onClick={onStart}
-        className="text-lg-mobile text-base-desktop px-10 py-5 border-3 border-ember text-ember-bright hover:bg-ember hover:text-bg transition-all duration-200 text-shadow-hard pixel-corners font-bold"
+        className="text-lg-mobile text-base-desktop px-10 py-5 border-3 border-ember text-ember-bright hover:bg-ember hover:text-bg transition-all duration-200 pixel-corners font-bold"
       >
         ABRIR A PRIMEIRA PORTA
       </button>
 
-      {showHint && (
-        <div className="text-sm-mobile text-xs-desktop text-ink-dim mt-8 opacity-70 flicker">
-          [clique para entrar - som recomendado]
-        </div>
-      )}
-
-      <div className="absolute bottom-10 left-0 right-0 flex justify-center gap-10 text-sm-mobile text-xs-desktop text-ink-dim">
-        <div>MELHOR: <span className="text-ember font-bold">PORTA {bestRun}</span></div>
-        <div>TENTATIVAS: <span className="text-ember">{totalRuns}</span></div>
+      <div className="text-sm-mobile text-xs-desktop text-ink-dim mt-8 opacity-70">
+        Created by: <a href="https://www.instagram.com/z44ck.g/?hl=en" className="underline hover:text-ember">z44ck.g</a>
       </div>
     </div>
   );
