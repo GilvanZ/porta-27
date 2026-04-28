@@ -1,0 +1,248 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@theme inline {
+  --font-pixel: "Press Start 2P", "VT323", ui-monospace, monospace;
+  --color-bg: #0a0b0f;
+  --color-bg-soft: #0f0f0f;
+  --color-fog: #2a2d38;
+  --color-ink: #f0ede0;
+  --color-ink-dim: #b8b5a0;
+  --color-ember: #ff8c42;
+  --color-ember-bright: #ffd700;
+  --color-blood: #ff4444;
+  --color-mind: #4a9eff;
+  --color-mind-bright: #87ceff;
+  --color-rare: #d4a0ff;
+  --color-gold: #ffeb3b;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html, body, #root {
+  min-height: 100%;
+  background: #0a0b0f;
+  color: #f0ede0;
+  font-family: var(--font-pixel);
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  image-rendering: pixelated;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+@media (min-width: 768px) {
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+button {
+  touch-action: manipulation;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  43% { opacity: 0.92; }
+  47% { opacity: 0.78; }
+  50% { opacity: 1; }
+  92% { opacity: 0.86; }
+}
+
+@keyframes drift {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(-30px, 8px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 2px currentColor) drop-shadow(0 0 6px currentColor); }
+  50% { filter: drop-shadow(0 0 4px currentColor) drop-shadow(0 0 14px currentColor); }
+}
+
+@keyframes float-up {
+  0% { transform: translateY(0); opacity: 0.4; }
+  100% { transform: translateY(-100vh); opacity: 0; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(2px, -1px); }
+  60% { transform: translate(-1px, -2px); }
+  80% { transform: translate(1px, 2px); }
+}
+
+@keyframes door-creak {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.01); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes roomFadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes roomPulse {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.4); }
+}
+
+@keyframes roomFloat {
+  0% { transform: translate(0, 0); opacity: 0.2; }
+  50% { transform: translate(6px, -16px); opacity: 0.7; }
+  100% { transform: translate(0, 0); opacity: 0.2; }
+}
+
+@keyframes roomDrift {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(-12px, 6px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes roomFall {
+  0% { transform: translateY(-12px); opacity: 0; }
+  20% { opacity: 0.6; }
+  100% { transform: translateY(60px); opacity: 0; }
+}
+
+@keyframes roomDash {
+  0% { transform: translateX(-20px); opacity: 0; }
+  20% { opacity: 0.7; }
+  100% { transform: translateX(40px); opacity: 0; }
+}
+
+@keyframes roomFlash {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes roomStreak {
+  0% { transform: translateY(-100%); opacity: 0; }
+  20% { opacity: 0.4; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+.flicker { animation: flicker 6s infinite; }
+.drift { animation: drift 14s ease-in-out infinite; }
+.glow-pulse { animation: glow-pulse 2.4s ease-in-out infinite; }
+
+.crt {
+  background-image: linear-gradient(rgba(10, 11, 15, 0.82), rgba(10, 11, 15, 0.82)), url("/corredor.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.crt::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.18) 0px,
+    rgba(0, 0, 0, 0.18) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+  z-index: 100;
+}
+
+.crt::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 35%,
+    rgba(0, 0, 0, 0.55) 80%,
+    rgba(0, 0, 0, 0.95) 100%
+  );
+  z-index: 101;
+}
+
+.pixel-corners {
+  clip-path: polygon(
+    0 4px, 4px 4px, 4px 0,
+    calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px,
+    100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%,
+    4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)
+  );
+}
+
+.text-shadow-ember {
+  text-shadow: 0 0 12px rgba(255, 140, 66, 0.8), 0 2px 4px rgba(0, 0, 0, 0.8), 0 1px 0 #000;
+}
+
+.text-shadow-hard {
+  text-shadow: 2px 2px 0 #000, 4px 4px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive text sizes for better readability */
+@media (max-width: 640px) {
+  .text-xs-mobile { font-size: 14px; line-height: 1.5; }
+  .text-sm-mobile { font-size: 16px; line-height: 1.5; }
+  .text-base-mobile { font-size: 18px; line-height: 1.5; }
+  .text-lg-mobile { font-size: 20px; line-height: 1.4; }
+  .text-xl-mobile { font-size: 24px; line-height: 1.4; }
+  .text-2xl-mobile { font-size: 28px; line-height: 1.3; }
+  .text-3xl-mobile { font-size: 32px; line-height: 1.3; }
+  .text-4xl-mobile { font-size: 40px; line-height: 1.2; }
+}
+
+@media (min-width: 641px) {
+  .text-xs-desktop { font-size: 12px; line-height: 1.5; }
+  .text-sm-desktop { font-size: 14px; line-height: 1.5; }
+  .text-base-desktop { font-size: 16px; line-height: 1.5; }
+  .text-lg-desktop { font-size: 18px; line-height: 1.4; }
+  .text-xl-desktop { font-size: 22px; line-height: 1.4; }
+  .text-2xl-desktop { font-size: 26px; line-height: 1.3; }
+  .text-3xl-desktop { font-size: 32px; line-height: 1.3; }
+  .text-4xl-desktop { font-size: 40px; line-height: 1.2; }
+}
+
+/* High contrast mode for better accessibility */
+@media (prefers-contrast: high) {
+  :root {
+    --color-bg: #000000;
+    --color-bg-soft: #111111;
+    --color-fog: #222222;
+    --color-ink: #ffffff;
+    --color-ink-dim: #cccccc;
+    --color-ember: #ffaa00;
+    --color-ember-bright: #ffff00;
+  }
+}
+
+.scanline-fast {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(155, 209, 255, 0.04) 50%,
+    transparent 100%
+  );
+  height: 80px;
+  animation: scanline 6s linear infinite;
+}

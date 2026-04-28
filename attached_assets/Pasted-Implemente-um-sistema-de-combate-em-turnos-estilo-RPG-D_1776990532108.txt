@@ -1,0 +1,105 @@
+Implemente um sistema de combate em turnos estilo RPG.
+Durante encontros com inimigos, o jogador pode escolher entre:
+
+Atacar
+Defender
+Usar item
+Fugir
+
+A chance de fugir deve diminuir proporcionalmente à vida atual do jogador. Quanto menor a vida, menor a chance de fuga.
+
+Item: Olho de Vidro
+
+Quando o jogador possui o Olho de Vidro:
+
+Surge um botão na interface para ativá-lo.
+Ao ativar, o jogador pode passar o mouse sobre as portas e ver exatamente o conteúdo de cada uma.
+Após escolher uma porta usando essa habilidade, o item é consumido e desaparece.
+
+Sistema de Armaduras (não acumuláveis)
+
+Adicionar três categorias:
+
+Botas
+Peitoral
+Capacete
+
+Cada peça reduz dano recebido.
+
+Criar 4 níveis para cada peça:
+
+Couro
+Ouro
+Adamantium
+Encantada
+
+Cada nível possui uma porcentagem maior de redução de dano.
+
+Efeito especial das botas: aumentar a chance de aparecerem portas que pulam números (atalhos).
+
+O jogador só pode equipar uma peça de cada tipo.
+
+Item: Totem do Tempo
+
+Se o jogador morrer possuindo esse item:
+
+Ele revive 5 portas anteriores à atual.
+Se estiver antes da porta 5, volta para a porta 1.
+O item é consumido após o uso.
+
+Regras de Itens
+
+Todos os itens, exceto armas e armaduras, são acumuláveis.
+O jogador pode descartar itens manualmente.
+Porém, um item só pode ser descartado após ter sido carregado por pelo menos 2 portas.
+
+No início o jogador terá 3 opcos de itens tier baixo, somente para ajudar no início, mas tem que ser itens nível baixo
+
+Sistema de Tiers de Itens
+
+Todos os itens (bons e ruins) possuem raridade:
+
+Comum
+Raro
+Épico
+Divino
+
+Itens ruins também possuem tier alto e efeitos fortes negativos.
+
+Adicionar novos itens variados, com efeitos positivos e negativos, por exemplo:
+
+Itens que aumentam loot mas atraem inimigos
+Itens que regeneram vida mas drenam sanidade
+Itens que revelam pistas falsas
+Itens que aumentam chance de eventos raros
+Itens amaldiçoados difíceis de remover
+
+Criar sinergias entre itens.
+
+Garantir que todas essas mecânicas se integrem ao sistema procedural já existente, mantendo o foco em:
+
+Escolha estratégica
+Risco vs recompensa
+Alta rejogabilidade
+
+Adicionar um painel fixo na tela exibindo todos os itens que o jogador está carregando.
+
+Requisitos:
+
+O inventário deve ficar sempre visível em um canto da tela (preferencialmente canto inferior direito).
+Cada item deve aparecer como ícone em pixel art.
+Ao passar o mouse sobre o ícone, mostrar:
+Nome do item
+Tier (Comum, Raro, Épico, Divino)
+Efeitos positivos e negativos
+Contador de portas desde que foi adquirido
+Itens equipáveis (botas, peitoral, capacete, arma) devem ter um indicador visual de equipado.
+Itens utilizáveis (como Olho de Vidro) devem exibir um botão de ativação no próprio ícone.
+Itens que ainda não podem ser descartados (menos de 2 portas) devem aparecer com um cadeado visual.
+Permitir clicar no item para:
+Usar (se for utilizável)
+Equipar (se for armadura/arma)
+Descartar (se permitido)
+O painel não deve pausar o jogo e deve ser discreto, combinando com o clima obscuro do jogo.
+
+Objetivo: o jogador conseguir tomar decisões estratégicas olhando rapidamente para os itens sem abrir menus.
