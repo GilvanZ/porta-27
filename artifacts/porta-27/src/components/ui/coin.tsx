@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
 const frames = [
-  "/media/Coin-pngs/coin_1.png",
-  "/media/Coin-pngs/coin_2.png",
-  "/media/Coin-pngs/coin_3.png",
-  "/media/Coin-pngs/coin_4.png",
-  "/media/Coin-pngs/coin_5.png",
-  "/media/Coin-pngs/coin_6.png",
-  "/media/Coin-pngs/coin_7.png",
-  "/media/Coin-pngs/coin_8.png",
+  "/media/ui/coin/coin_1.png",
+  "/media/ui/coin/coin_2.png",
+  "/media/ui/coin/coin_3.png",
+  "/media/ui/coin/coin_4.png",
+  "/media/ui/coin/coin_5.png",
+  "/media/ui/coin/coin_6.png",
+  "/media/ui/coin/coin_7.png",
+  "/media/ui/coin/coin_8.png",
 ];
 
 export function Coin() {
